@@ -1,5 +1,21 @@
 import mongoose from "mongoose";
 
+
+// Define User Schema
+const userSchema = new mongoose.Schema({
+  name: {type: String, required: true},
+  email: {type: String, required: true, unique: true},
+  password: {type: String, required: true},
+  profileImage: {type: String, default: "default-avatar.png"},
+  wishlist: [{type: mongoose.Schema.Types.ObjectId, ref: "Product"}],
+  orders: [{type: mongoose.Schema.Types.ObjectId, ref: "Order"}],
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
+});
+
 // Define Category Schema
 const categorySchema = new mongoose.Schema({
   name: {type: String, required: true},
@@ -7,17 +23,33 @@ const categorySchema = new mongoose.Schema({
   imageUrl: {type: String},
 });
 
-// Define Color Schema
-const colorSchema = new mongoose.Schema({
-  code: {type: String, required: true},
-  name: {type: String},
+// Size Schema
+const SIZE_VALUES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL", "6XL", "7XL"];
+
+const sizeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    enum: SIZE_VALUES,
+  },
 });
 
-// Define Size Schema
-const sizeSchema = new mongoose.Schema({
-  name: {type: String, required: true},
-  description: {type: String},
+// Color Schema
+const COLOR_VALUES = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange", "Pink", "Black", "White", "Gray"];
+
+const colorSchema = new mongoose.Schema({
+  code: {
+    type: String,
+    required: true,
+    unique: true,
+    enum: COLOR_VALUES,
+  },
+  name: {
+    type: String,
+    enum: COLOR_VALUES,
+  },
 });
+
 
 // Define Product Schema
 const productSchema = new mongoose.Schema({
@@ -44,15 +76,8 @@ const reviewSchema = new mongoose.Schema({
   
 });
 
-// Define User Schema
-const userSchema = new mongoose.Schema({
-  name: {type: String, required: true},
-  email: {type: String, required: true, unique: true},
-  password: {type: String, required: true},
-  profileImage: {type: String, default: "default-avatar.png"},
-  wishlist: [{type: mongoose.Schema.Types.ObjectId, ref: "Product"}],
-  orders: [{type: mongoose.Schema.Types.ObjectId, ref: "Order"}],
-});
+
+
 
 // Define Order Schema
 const orderSchema = new mongoose.Schema({

@@ -7,8 +7,7 @@ import cors from "cors";
 dotenv.config()
 const app : Express = express();
 app.set("port", process.env.PORT || 3000);
-console.log(__dirname + "/public/");
-app.use(express.static(__dirname + "/public/"));
+
 app.use(cors());
 
 
