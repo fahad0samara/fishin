@@ -1,11 +1,28 @@
 import express, {Express, Request, Response, Application} from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
+import routerAuth from "./src/router/Auth";
+import routerCategories from "./src/router/Categories";
+import routerColorsSizes from "./src/router/Colors_Sizes";
+
+
 
 
 //For env File
 dotenv.config()
-const app : Express = express();
+const app: Express = express();
+
+const mongodbUri = process.env.MONGODB_URI;
+if (!mongodbUri) {
+  throw new Error("MONGODB_URI environment variable is not set.");
+}
+
+mongoose
+  .connect(mongodbUri)
+  .then(() => console.log("MongoDB connected"))
+  .catch(error => console.error(error));
+
 app.set("port", process.env.PORT || 3000);
 
 app.use(cors());
@@ -27,6 +44,11 @@ app.use((req, res, next) => {
 app.get("/", (req, res, next) => {
   res.send("Hello World");
 });
+
+app.use("/api/auth", routerAuth); 
+app.use("/api/categories", routerCategories);
+app.use("/api/colorsSizes", routerColorsSizes);
+
 
 app.listen(app.get("port"), () => {
   // middleware for logging

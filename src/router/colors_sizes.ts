@@ -6,12 +6,18 @@ const router = express.Router();
 // Fetch available sizes
 router.get("/sizes", async (req, res) => {
   try {
+    
     const sizes = await Size.find();
+
     res.status(200).json(sizes);
   } catch (error:any) {
-    res.status(500).json({ message: "Error fetching sizes", error: error.message });
+    console.error("Error fetching sizes:", error);
+    res
+      .status(500)
+      .json({message: "Error fetching sizes", error: error.message});
   }
 });
+
 
 // Fetch available colors
 router.get("/colors", async (req, res) => {
@@ -22,6 +28,11 @@ router.get("/colors", async (req, res) => {
     res.status(500).json({ message: "Error fetching colors", error: error.message });
   }
 });
+
+
+
+
+
 
 
 

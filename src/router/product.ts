@@ -11,7 +11,7 @@ import {Product} from "../model/Model";
 // configure Multer to use Azure Blob Storage as the storage engine
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
-router.post("/", upload.array("images", 5), async (req, res) => {
+router.post("/add", upload.array("images", 5), async (req, res) => {
   try {
     const file = req.file;
     if (!file) {
@@ -52,7 +52,7 @@ router.post("/", upload.array("images", 5), async (req, res) => {
 
 
 // Get all products
-router.get("/", async (req, res) => {
+router.get("/get", async (req, res) => {
   try {
     const products = await Product.find().populate("category colors sizes");
     res.status(200).json(products);
