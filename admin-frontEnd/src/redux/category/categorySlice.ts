@@ -18,6 +18,7 @@ interface CategoryState {
   category: Category[];
   loading: boolean;
   error: unknown;
+  message: string | null;
 }
 
 const categorySlice = createSlice({
@@ -26,8 +27,18 @@ const categorySlice = createSlice({
     category: [],
     loading: false,
     error: null,
+    message: null,
   } as CategoryState,
-  reducers: {},
+    reducers: {
+        clearError(state) {
+            state.error = null;
+        }
+        ,
+        clearMessage(state) {
+            state.message = null;
+        }
+
+  },
   extraReducers: builder => {
     builder
       .addCase(fetchCategories.pending, state => {
@@ -98,7 +109,7 @@ const categorySlice = createSlice({
         (state, action: PayloadAction<number>) => {
           state.loading = false;
           state.category = state.category.filter(
-            category => category._id!== action.payload
+            category => category._id !== action.payload
           );
         }
       )
@@ -114,3 +125,4 @@ const categorySlice = createSlice({
 });
 
 export default categorySlice.reducer;
+export const {clearError, clearMessage} = categorySlice.actions;

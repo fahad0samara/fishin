@@ -103,7 +103,8 @@
 
 // export default CategoryForm;
 
-import  {useState, useEffect} from "react";
+import {useState, useEffect} from "react";
+import {FaEdit, FaTrashAlt} from "react-icons/fa";
 import {useDispatch, useSelector} from "react-redux";
 import {
   fetchCategories,
@@ -113,70 +114,117 @@ import {
   ErrorResponse,
 } from "./redux/category/categoryThunks";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
-import { RootState } from "./redux/store";
+import {RootState} from "./redux/store";
+import {toast} from "react-toastify";
 function CategoryList() {
-  const { category, loading, error } = useSelector(
+  const {category, loading, error} = useSelector(
     (state: RootState) => state.category
   );
-  
+
   const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
 
   const [categoryName, setCategoryName] = useState("");
   const [categoryDescription, setCategoryDescription] = useState("");
 
-const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-  null
-);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null
+  );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+   const [inputErrors, setInputErrors] = useState({
+     name: "",
+     description: "",
+   });
 
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
   const handleCreateCategory = () => {
-    if (categoryName.trim() !== "" && categoryDescription.trim() !== "") {
-      dispatch(
-        createCategory({name: categoryName, description: categoryDescription})
-      );
-      setCategoryName("");
-      setCategoryDescription("");
-      setIsCreateModalOpen(false);
+    try {
+      if (validateInputs()) {
+        dispatch(
+          createCategory({name: categoryName, description: categoryDescription})
+        );
+        setCategoryName("");
+        setCategoryDescription("");
+        setIsCreateModalOpen(false);
+        toast.success("Category created successfully!");
+      }
+    } catch (error) {
+      toast.error((error as ErrorResponse).message);
     }
   };
 
   const handleUpdateCategory = async () => {
-    if (
-      selectedCategoryId !== null &&
-      categoryName.trim() !== "" &&
-      categoryDescription.trim() !== ""
-    ) {
-      await dispatch(
-        updateCategory({
-          
-          categoryId: selectedCategoryId,
-          categoryData: {name: categoryName, description: categoryDescription},
-        })
-      );
-      setCategoryName("");
-      setCategoryDescription("");
-      setSelectedCategoryId(null);
-      setIsEditModalOpen(false);
+    try {
+      if (
+        selectedCategoryId !== null &&
+        categoryName.trim() !== "" &&
+        categoryDescription.trim() !== ""
+      ) {
+        await dispatch(
+          updateCategory({
+            categoryId: selectedCategoryId,
+            categoryData: {
+              name: categoryName,
+              description: categoryDescription,
+            },
+          })
+        );
+        setCategoryName("");
+        setCategoryDescription("");
+        setSelectedCategoryId(null);
+        setIsEditModalOpen(false);
 
-      dispatch(fetchCategories());
+        dispatch(fetchCategories());
+        toast.success("Category updated successfully!");
+      }
+    } catch (error) {
+      toast.error((error as ErrorResponse).message);
     }
   };
 
   const handleDeleteCategory = async () => {
-    if (selectedCategoryId !== null) {
-      await dispatch(deleteCategory(selectedCategoryId));
-      setSelectedCategoryId(null);
-      setIsDeleteModalOpen(false);
+    try {
+      if (selectedCategoryId !== null) {
+        await dispatch(deleteCategory(selectedCategoryId));
+        setSelectedCategoryId(null);
+        setIsDeleteModalOpen(false);
 
-      dispatch(fetchCategories());
+        dispatch(fetchCategories());
+        toast.success("Category deleted successfully!");
+      }
+    } catch (error) {
+      toast.error((error as ErrorResponse).message);
     }
   };
+
+
+    const validateInputs = () => {
+      let isValid = true;
+      const errors = {
+        name: "",
+        description: "",
+      };
+
+      if (categoryName.trim() === "") {
+        errors.name = "Category name is required";
+        isValid = false;
+      }
+
+      if (categoryDescription.trim() === "") {
+        errors.description = "Category description is required";
+        isValid = false;
+      }
+
+      setInputErrors(errors);
+
+      return isValid;
+    };
+
+
 
   if (loading) {
     return <div className="text-center py-4">Loading...</div>;
@@ -186,58 +234,13 @@ const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     return (
       <div className="text-center py-4">
         Error: {(error as ErrorResponse).message}
-        
-       
-
       </div>
     );
   }
 
-
-
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-semibold mb-4">Categories</h1>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="border p-2">Name</th>
-            <th className="border p-2">Description</th>
-            <th className="border p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {category.map(category => (
-            <tr key={category._id}>
-              <td className="border p-2">{category.name}</td>
-              <td className="border p-2">{category.description}</td>
-              <td className="border p-2">
-                <button
-                  onClick={() => {
-                setSelectedCategoryId(category._id as number | null);
-                    setCategoryName(category.name); // Set initial value for name
-                    setCategoryDescription(category.description); // Set initial value for description
-                    setIsEditModalOpen(true);
-                  }}
-                  className="text-blue-500 hover:text-blue-700 mr-2"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSelectedCategoryId(category._id as number | null);
-                    setIsDeleteModalOpen(true);
-                  }}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
       <div className="mt-8">
         <button
           onClick={() => setIsCreateModalOpen(true)}
@@ -246,13 +249,52 @@ const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
           Create New Category
         </button>
       </div>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-blue-500 text-white">
+            <th className="border p-3 text-left">Name</th>
+            <th className="border p-3 text-left">Description</th>
+            <th className="border p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {category.map(category => (
+            <tr key={category._id} className="bg-white hover:bg-gray-100">
+              <td className="border p-3 text-lg">{category.name}</td>
+              <td className="border p-3 text-lg">{category.description}</td>
+              <td className="border p-3 space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedCategoryId(category._id as number | null);
+                    setCategoryName(category.name);
+                    setCategoryDescription(category.description);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="text-blue-500 hover:text-blue-700 focus:outline-none transition-colors duration-300"
+                >
+                  <FaEdit className="inline-block mr-1 -mt-1" />
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategoryId(category._id as number | null);
+                    setIsDeleteModalOpen(true);
+                  }}
+                  className="text-red-500 hover:text-red-700 focus:outline-none transition-colors duration-300"
+                >
+                  <FaTrashAlt className="inline-block mr-1 -mt-1" />
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* Create Category Modal */}
       {isCreateModalOpen && (
-        <div
-          
-          className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
-        >
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
           <div className="bg-white p-4 rounded shadow-lg">
             <h2 className="text-xl font-semibold mb-2">Create New Category</h2>
             <input
@@ -262,6 +304,9 @@ const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
               onChange={e => setCategoryName(e.target.value)}
               className="px-4 py-2 border rounded w-full mb-2"
             />
+            {inputErrors.name && (
+              <p className="text-red-500 text-sm">{inputErrors.name}</p>
+            )}
             <input
               type="text"
               placeholder="Category Description"
@@ -269,6 +314,9 @@ const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
               onChange={e => setCategoryDescription(e.target.value)}
               className="px-4 py-2 border rounded w-full mb-2"
             />
+            {inputErrors.description && (
+              <p className="text-red-500 text-sm">{inputErrors.description}</p>
+            )}
             <div className="flex justify-end">
               <button
                 onClick={() => setIsCreateModalOpen(false)}
