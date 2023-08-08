@@ -4,7 +4,7 @@ const router = express.Router();
 
 
 
-router.get("/categories", async (req, res) => {
+router.get("/get", async (req, res) => {
   try {
     const categories = await Category.find();
     res.status(200).json(categories);
@@ -32,7 +32,7 @@ router.get("/categories/:categoryId", async (req, res) => {
 });
 
 //POST New Category
-router.post("/categories", async (req, res) => {
+router.post("/add", async (req, res) => {
   try {
     const newCategory = await Category.create(req.body);
     res.status(201).json(newCategory);

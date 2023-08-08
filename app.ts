@@ -46,8 +46,8 @@ app.get("/", (req, res, next) => {
 });
 
 app.use("/api/auth", routerAuth); 
-app.use("/api/categories", routerCategories);
-app.use("/api/colorsSizes", routerColorsSizes);
+app.use("/categories", routerCategories);
+app.use("/colorsSizes", routerColorsSizes);
 
 
 app.listen(app.get("port"), () => {
