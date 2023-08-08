@@ -5,23 +5,25 @@ import {
   deleteCategory,
   fetchCategories,
 } from "./categoryThunks";
+import { Key } from "react";
 
 interface Category {
-  id: number;
+  _id: Key | null | undefined;
+
   name: string;
   description: string;
 }
 
 interface CategoryState {
-  data: Category[];
+  category: Category[];
   loading: boolean;
   error: unknown;
 }
 
 const categorySlice = createSlice({
-  name: "categories",
+  name: "category",
   initialState: {
-    data: [],
+    category: [],
     loading: false,
     error: null,
   } as CategoryState,
@@ -36,7 +38,7 @@ const categorySlice = createSlice({
         fetchCategories.fulfilled,
         (state, action: PayloadAction<Category[]>) => {
           state.loading = false;
-          state.data = action.payload;
+          state.category = action.payload;
         }
       )
       .addCase(
@@ -54,7 +56,7 @@ const categorySlice = createSlice({
         createCategory.fulfilled,
         (state, action: PayloadAction<Category>) => {
           state.loading = false;
-          state.data.push(action.payload); // Add the new category to the state
+          state.category.push(action.payload); // Add the new category to the state
         }
       )
       .addCase(
@@ -72,8 +74,8 @@ const categorySlice = createSlice({
         updateCategory.fulfilled,
         (state, action: PayloadAction<Category>) => {
           state.loading = false;
-          state.data = state.data.map(category => {
-            if (category.id === action.payload.id) {
+          state.category = state.category.map(category => {
+            if (category._id === action.payload._id) {
               return action.payload;
             }
             return category;
@@ -95,8 +97,8 @@ const categorySlice = createSlice({
         deleteCategory.fulfilled,
         (state, action: PayloadAction<number>) => {
           state.loading = false;
-          state.data = state.data.filter(
-            category => category.id !== action.payload
+          state.category = state.category.filter(
+            category => category._id!== action.payload
           );
         }
       )

@@ -2,23 +2,29 @@ import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios, {AxiosError} from "axios";
 
 interface Category {
-  id: number;
+  _id: number;
   name: string;
   description: string;
   // Add other properties as needed
 }
 
-interface ErrorResponse {
-  message: string; // Adjust this according to the structure of your error response
+export interface ErrorResponse {
+    message: string;
+
 }
+
+
 
 export const createCategory = createAsyncThunk<
   Category,
-  Category,
+  {name: string; description: string},
   {rejectValue: ErrorResponse}
 >("categories/createCategory", async (categoryData, thunkAPI) => {
   try {
-    const response = await axios.post("/api/categories", categoryData);
+    const response = await axios.post(
+      "http://localhost:3000/categories/add",
+      categoryData
+    );
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<ErrorResponse>;
@@ -28,14 +34,15 @@ export const createCategory = createAsyncThunk<
   }
 });
 
+
 export const updateCategory = createAsyncThunk<
   Category,
-  {categoryId: number; categoryData: Category},
+  {categoryId: number; categoryData: Omit<Category, "_id">},
   {rejectValue: ErrorResponse}
 >("categories/updateCategory", async ({categoryId, categoryData}, thunkAPI) => {
   try {
     const response = await axios.put(
-      `/api/categories/${categoryId}`,
+      `http://localhost:3000/categories/update/${categoryId}`,
       categoryData
     );
     return response.data;
@@ -53,7 +60,7 @@ export const deleteCategory = createAsyncThunk<
   {rejectValue: ErrorResponse}
 >("categories/deleteCategory", async (categoryId, thunkAPI) => {
   try {
-    await axios.delete(`/api/categories/${categoryId}`);
+    await axios.delete(`http://localhost:3000/categories/delete/${categoryId}`);
     return categoryId;
   } catch (error) {
     const axiosError = error as AxiosError<ErrorResponse>;
@@ -69,8 +76,10 @@ export const fetchCategories = createAsyncThunk<
   {rejectValue: ErrorResponse}
 >("categories/fetchCategories", async (_, thunkAPI) => {
   try {
-    const response = await axios.get("/api/categories");
-    return response.data;
+      const response = await axios.get("http://localhost:3000/categories/get");
+        return response.data;
+
+      
   } catch (error) {
     const axiosError = error as AxiosError<ErrorResponse>;
     return thunkAPI.rejectWithValue(
