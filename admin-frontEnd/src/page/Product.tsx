@@ -1,21 +1,60 @@
-import {useState, useEffect} from "react";
+import React, {useState, useEffect, ChangeEvent, FormEvent} from "react";
 import axios from "axios";
 import {fetchCategories} from "../redux/category/categoryThunks";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../redux/store";
 import {useDispatch, useSelector} from "react-redux";
 import Select from "react-select";
+import {
+  createProduct,
+  deleteProduct,
+  fetchProduct,
+  updateProduct,
+  ErrorResponse,
+} from "../redux/Product/productThunks";
+interface Color {
+  _id: string;
+  name: string;
+  code: string;
+}
 
-const Product = () => {
+interface Size {
+  _id: string;
+  name: string;
+}
+
+interface Category {
+  _id: string;
+  name: string;
+}
+
+interface FormData {
+  name: string;
+  price: number;
+  category: string;
+  description: string;
+  images: File[];
+  brand: string;
+  selectedColors: string[];
+  selectedSizes: string[];
+}
+
+const Product: React.FC = () => {
+     const {product, loading, error} = useSelector(
+       (state: RootState) => state.category
+     );
+
+    
   const {category} = useSelector((state: RootState) => state.category);
 
-  const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
+const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
-  const [colors, setColors] = useState([]);
-  const [sizes, setSizes] = useState([]);
-  const [formData, setFormData] = useState({
+
+  const [colors, setColors] = useState<Color[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     price: 0,
     category: "",
@@ -30,16 +69,14 @@ const Product = () => {
     // Fetch categories, colors, and sizes from dynamic data source
     const fetchDynamicData = async () => {
       try {
-        const colorsResponse = await axios.get(
+        const colorsResponse = await axios.get<Color[]>(
           "http://localhost:3000/colorsSizes/colors"
         );
-        const sizesResponse = await axios.get(
+        const sizesResponse = await axios.get<Size[]>(
           "http://localhost:3000/colorsSizes/sizes"
         );
 
         setColors(colorsResponse.data);
-        console.log(colorsResponse.data);
-
         setSizes(sizesResponse.data);
       } catch (error) {
         console.error(error);
@@ -49,7 +86,9 @@ const Product = () => {
     fetchDynamicData();
   }, []);
 
-  const handleInputChange = e => {
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const {name, value} = e.target;
     setFormData(prevData => ({
       ...prevData,
@@ -57,15 +96,15 @@ const Product = () => {
     }));
   };
 
-  const handleImageChange = e => {
-    const files = Array.from(e.target.files);
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
     setFormData(prevData => ({
       ...prevData,
-      images: [...prevData.images, ...files], // Append new files to existing images
+      images: [...prevData.images, ...files],
     }));
   };
 
-  const handleRemoveImage = indexToRemove => {
+  const handleRemoveImage = (indexToRemove: number) => {
     setFormData(prevData => ({
       ...prevData,
       images: prevData.images.filter((_, index) => index !== indexToRemove),
@@ -79,9 +118,7 @@ const Product = () => {
     }));
   };
 
-  // ...
-
-  const handleColorChange = selectedOptions => {
+  const handleColorChange = (selectedOptions: any[]) => {
     const selectedColors = selectedOptions.map(option => option.value);
     setFormData(prevData => ({
       ...prevData,
@@ -89,7 +126,17 @@ const Product = () => {
     }));
   };
 
-  const handleSizeChange = selectedOptions => {
+      const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        const {name, value} = e.target;
+        setFormData(prevData => ({
+          ...prevData,
+          [name]: value,
+        }));
+      };
+
+    
+
+  const handleSizeChange = (selectedOptions: any[]) => {
     const selectedSizes = selectedOptions.map(option => option.value);
     setFormData(prevData => ({
       ...prevData,
@@ -97,66 +144,66 @@ const Product = () => {
     }));
   };
 
-  const handleSubmit = async e => {
-    e.preventDefault();
-    console.log("Form data before submission:", formData);
-    const formDataWithImages = new FormData();
-    formDataWithImages.append("name", formData.name);
-    formDataWithImages.append("price", formData.price);
-    formDataWithImages.append("category", formData.category);
-    formDataWithImages.append("description", formData.description);
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
 
-    formData.images.forEach(image => {
-      formDataWithImages.append("images", image);
-    });
-    // Convert the selectedColors array to a comma-separated string
+        const formDataWithImages = new FormData();
+        formDataWithImages.append("name", formData.name);
+        formDataWithImages.append("price", formData.price.toString());
+        formDataWithImages.append("category", formData.category);
+        formDataWithImages.append("description", formData.description);
 
-    formDataWithImages.append("brand", formData.brand);
-    // Iterate over each selected color and append it separately
-    formData.selectedColors.forEach(colorId => {
-      formDataWithImages.append("colors", colorId);
-    });
+        formData.images.forEach(image => {
+        formDataWithImages.append("images", image);
+        });
 
-    // Iterate over each selected size and append it separately
-    formData.selectedSizes.forEach(sizeId => {
-      formDataWithImages.append("sizes", sizeId);
-    });
+        formDataWithImages.append("brand", formData.brand);
 
-    console.log("FormDataWithImages before Axios request:", formDataWithImages); // Log FormDataWithImages before Axios request
+        formData.selectedColors.forEach(colorId => {
+        formDataWithImages.append("colors", colorId);
+        });
 
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/products/add",
-        formDataWithImages,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        formData.selectedSizes.forEach(sizeId => {
+        formDataWithImages.append("sizes", sizeId);
+        });
+      
+
+        try {
+    
+                // dispatch createProduct
+                dispatch(createProduct(formDataWithImages)),
+                  {
+                    headers: {
+                      "Content-Type": "multipart/form-data",
+                    },
+                  };
+            
+
+
+        // Clear the form after successful submission
+        setFormData({
+            name: "",
+            price: 0,
+            category: "",
+            description: "",
+            images: [],
+            brand: "",
+            selectedColors: [],
+            selectedSizes: [],
+        });
+        } catch (error:any) {
+        console.error("Error adding product:", error.response);
         }
-      );
-
-      console.log("Product added:", response.data);
-      // Clear the form after successful submission
-      setFormData({
-        name: "",
-        price: 0,
-        category: "",
-        description: "",
-        images: [],
-        brand: "",
-        selectedColors: [],
-        selectedSizes: [],
-      });
-        
-    } catch (error) {
-      console.error("Error adding product:", error.response);
-    }
-  };
+    };
 
   return (
-    <div className="p-4">
+    <div className="p-4 ">
       <h2 className="text-xl font-semibold mb-4">Add Product</h2>
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
+      <form
+        className="flex flex-col space-y-4 max-w-2xl mx-auto  w-full"
+        onSubmit={handleSubmit}
+        encType="multipart/form-data"
+      >
         <label className="block mb-2">
           Name:
           <input
@@ -183,11 +230,11 @@ const Product = () => {
             className="border rounded w-full py-2 px-3"
             name="category"
             value={formData.category}
-            onChange={handleInputChange}
+            onChange={handleCategoryChange}
           >
             <option value="">Select a category</option>
             {category.map(category => (
-              <option key={category._id} value={category._id}>
+              <option key={category._id} value={category._id?.toString()}>
                 {category.name}
               </option>
             ))}
@@ -202,7 +249,7 @@ const Product = () => {
             onChange={handleInputChange}
           />
         </label>
-        < >
+        <>
           <span className="text-lg font-semibold">Images:</span>
           <div className="border rounded p-3 mt-2">
             <div className="grid grid-cols-3 gap-4 bg">

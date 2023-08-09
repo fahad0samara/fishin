@@ -8,6 +8,8 @@ import {persistStore, persistReducer} from "redux-persist";
 
 import categoryReducer from "./category/categorySlice";
 import darkModeReducer from "./Darkmode/darkModeSlice";
+import productReducer from "./Product/productSlice"
+
 import storage from "redux-persist/lib/storage";
 
 
@@ -21,6 +23,7 @@ const persistedReducer = persistReducer(
   persistConfig,
   combineReducers({
     category: categoryReducer,
+    product: productReducer,
 
     darkmode: darkModeReducer,
   })
