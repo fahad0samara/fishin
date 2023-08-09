@@ -4,7 +4,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.AZURE_STORAGE_CONNECTION_STRING
 );
 
-const containerName = "Fashion";
+const containerName = "fashion-app";
 
 const containerClient = blobServiceClient.getContainerClient(containerName);
 

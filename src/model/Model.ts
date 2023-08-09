@@ -89,7 +89,8 @@ const productSchema = new mongoose.Schema({
   images: [{type: String}], // Store image URLs
   reviews: [{type: mongoose.Schema.Types.ObjectId, ref: "Review"}],
   brand: {type: String, required: true},
-  colors: [{type: mongoose.Schema.Types.ObjectId, ref: "Color"}],
+  colors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Color" }],
+  
   sizes: [{type: mongoose.Schema.Types.ObjectId, ref: "Size"}],
   availability: {type: Boolean, default: true},
 });

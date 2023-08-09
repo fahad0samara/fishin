@@ -136,6 +136,18 @@ const Product = () => {
       );
 
       console.log("Product added:", response.data);
+      // Clear the form after successful submission
+      setFormData({
+        name: "",
+        price: 0,
+        category: "",
+        description: "",
+        images: [],
+        brand: "",
+        selectedColors: [],
+        selectedSizes: [],
+      });
+        
     } catch (error) {
       console.error("Error adding product:", error.response);
     }

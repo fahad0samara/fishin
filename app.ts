@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import routerAuth from "./src/router/Auth";
 import routerCategories from "./src/router/Categories";
 import routerColorsSizes from "./src/router/Colors_Sizes";
+import routerProducts from "./src/router/product";
 
 
 
@@ -48,6 +49,7 @@ app.get("/", (req, res, next) => {
 app.use("/api/auth", routerAuth); 
 app.use("/categories", routerCategories);
 app.use("/colorsSizes", routerColorsSizes);
+app.use("/products", routerProducts);
 
 
 app.listen(app.get("port"), () => {

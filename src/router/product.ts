@@ -11,44 +11,63 @@ import {Product} from "../model/Model";
 // configure Multer to use Azure Blob Storage as the storage engine
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
+const sanitizeFileName = (fileName: string) => {
+  return fileName.replace(/[^a-zA-Z0-9-_.]/g, "").replace(/\s+/g, "_");
+
+ 
+};
+
+
+
 router.post("/add", upload.array("images", 5), async (req, res) => {
   try {
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({error: "No file uploaded"});
-    }
-    // compress the image using Sharp
-    const compressedImage = await sharp(file.buffer)
-      .resize(500, 500)
-      .jpeg({quality: 80})
-      .toBuffer();
-    if (!req.file) {
-      return res.status(400).json({error: "No file uploaded"});
+    const files = req.files as Express.Multer.File[];
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({error: "No files uploaded"});
     }
 
-    // generate a unique filename for the file
-    const filename = `${file.originalname}-${Date.now()}`;
+    const compressedImages = await Promise.all(
+      files.map<Promise<Buffer>>(async file => {
+        return await sharp(file.buffer)
+          .resize(500, 500)
+          .jpeg({quality: 80})
+          .toBuffer();
+      })
+    );
 
-    // create a new block blob with the generated filename
-    const blockBlobClient = containerClient.getBlockBlobClient(filename);
+    const uploadedImageURLs = await Promise.all(
+      compressedImages.map<Promise<string>>(async (compressedImage, index) => {
+        const sanitizedFileName = sanitizeFileName(files[index].originalname); 
+        console.log("Sanitized Filename:", sanitizedFileName); 
+        const filename = `${sanitizedFileName}-${Date.now()}`;
+        
+        const blockBlobClient = containerClient.getBlockBlobClient(filename);
+        await blockBlobClient.upload(compressedImage, compressedImage.length);
+        return blockBlobClient.url;
+      })
+    );
 
-    // upload the compressed image to Azure Blob Storage
-    await blockBlobClient.upload(compressedImage, compressedImage.length);
-
-    // Create a new product with the uploaded image URLs
     const newProduct = new Product({
       ...req.body,
-      image: blockBlobClient.url,
-      image_url: blockBlobClient.url,
+      image: uploadedImageURLs[0],
+      image_url: uploadedImageURLs[0],
+      images: uploadedImageURLs,
     });
+  
+  
 
     await newProduct.save();
+
     res.status(201).json(newProduct);
+    
   } catch (error) {
     console.error(error);
     res.status(400).json({message: "Error creating product"});
   }
 });
+
+
 
 
 // Get all products
