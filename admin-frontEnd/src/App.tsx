@@ -116,6 +116,7 @@ import {
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "./redux/store";
 import {toast} from "react-toastify";
+import { validateInputs } from "./error/Valid";
 function CategoryList() {
   const {category, loading, error} = useSelector(
     (state: RootState) => state.category
@@ -141,24 +142,33 @@ function CategoryList() {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const handleCreateCategory = () => {
-    try {
-      if (validateInputs()) {
-        dispatch(
-          createCategory({name: categoryName, description: categoryDescription})
-        );
-        setCategoryName("");
-        setCategoryDescription("");
-        setIsCreateModalOpen(false);
-        toast.success("Category created successfully!");
-      }
-    } catch (error) {
-      toast.error((error as ErrorResponse).message);
-    }
-  };
+const handleCreateCategory = () => {
+  try {
+    const {isValid, errors} = validateInputs(categoryName, categoryDescription);
 
-  const handleUpdateCategory = async () => {
-    try {
+    if (isValid) {
+      dispatch(
+        createCategory({name: categoryName, description: categoryDescription})
+      );
+      setCategoryName("");
+      setCategoryDescription("");
+      setIsCreateModalOpen(false);
+      toast.success("Category created successfully!");
+      setInputErrors({name: "", description: ""});
+    } else {
+      setInputErrors(errors);
+    }
+  } catch (error) {
+    toast.error((error as ErrorResponse).message);
+  }
+};
+
+
+const handleUpdateCategory = async () => {
+  try {
+    const {isValid, errors} = validateInputs(categoryName, categoryDescription);
+
+    if (isValid) {
       if (
         selectedCategoryId !== null &&
         categoryName.trim() !== "" &&
@@ -180,11 +190,16 @@ function CategoryList() {
 
         dispatch(fetchCategories());
         toast.success("Category updated successfully!");
+        setInputErrors({name: "", description: ""});
       }
-    } catch (error) {
-      toast.error((error as ErrorResponse).message);
+    } else {
+      setInputErrors(errors);
     }
-  };
+  } catch (error) {
+    toast.error((error as ErrorResponse).message);
+  }
+};
+
 
   const handleDeleteCategory = async () => {
     try {
@@ -202,27 +217,7 @@ function CategoryList() {
   };
 
 
-    const validateInputs = () => {
-      let isValid = true;
-      const errors = {
-        name: "",
-        description: "",
-      };
-
-      if (categoryName.trim() === "") {
-        errors.name = "Category name is required";
-        isValid = false;
-      }
-
-      if (categoryDescription.trim() === "") {
-        errors.description = "Category description is required";
-        isValid = false;
-      }
-
-      setInputErrors(errors);
-
-      return isValid;
-    };
+ 
 
 
 
@@ -243,8 +238,15 @@ function CategoryList() {
       <h1 className="text-3xl font-semibold mb-4">Categories</h1>
       <div className="mt-8">
         <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+          onClick={() => {
+            setIsCreateModalOpen(true);
+            setCategoryName("");
+            setCategoryDescription("");
+            setInputErrors({name: "", description: ""});
+          }}
+          className={
+            "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+          }
         >
           Create New Category
         </button>
@@ -295,13 +297,16 @@ function CategoryList() {
       {/* Create Category Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-          <div className="bg-white p-4 rounded shadow-lg">
+          <div className="bg-white p-4 rounded shadow-lg max-w-lg w-full">
             <h2 className="text-xl font-semibold mb-2">Create New Category</h2>
             <input
               type="text"
               placeholder="Category Name"
               value={categoryName}
-              onChange={e => setCategoryName(e.target.value)}
+              onChange={e => {
+                setCategoryName(e.target.value);
+                setInputErrors(prevState => ({...prevState, name: ""}));
+              }}
               className="px-4 py-2 border rounded w-full mb-2"
             />
             {inputErrors.name && (
@@ -311,7 +316,10 @@ function CategoryList() {
               type="text"
               placeholder="Category Description"
               value={categoryDescription}
-              onChange={e => setCategoryDescription(e.target.value)}
+              onChange={e => {
+                setCategoryDescription(e.target.value);
+                setInputErrors(prevState => ({...prevState, description: ""}));
+              }}
               className="px-4 py-2 border rounded w-full mb-2"
             />
             {inputErrors.description && (
@@ -337,22 +345,34 @@ function CategoryList() {
 
       {isEditModalOpen && selectedCategoryId !== null && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-          <div className="bg-white p-4 rounded shadow-lg">
+          <div className="bg-white p-4 rounded shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-2">Edit Category</h2>
             <input
               type="text"
               placeholder="Category Name"
               value={categoryName}
-              onChange={e => setCategoryName(e.target.value)}
+              onChange={e => {
+                setCategoryName(e.target.value);
+                setInputErrors(prevState => ({...prevState, name: ""}));
+              }}
               className="px-4 py-2 border rounded w-full mb-2"
             />
+            {inputErrors.name && (
+              <p className="text-red-500 text-sm">{inputErrors.name}</p>
+            )}
             <input
               type="text"
               placeholder="Category Description"
               value={categoryDescription}
-              onChange={e => setCategoryDescription(e.target.value)}
+              onChange={e => {
+                setCategoryDescription(e.target.value);
+                setInputErrors(prevState => ({...prevState, description: ""}));
+              }}
               className="px-4 py-2 border rounded w-full mb-2"
             />
+            {inputErrors.description && (
+              <p className="text-red-500 text-sm">{inputErrors.description}</p>
+            )}
             <div className="flex justify-end">
               <button
                 onClick={() => {
@@ -360,6 +380,7 @@ function CategoryList() {
                   setIsEditModalOpen(false);
                   setCategoryName(""); // Reset the input fields
                   setCategoryDescription(""); // Reset the input fields
+                  setInputErrors({name: "", description: ""}); // Clear errors
                 }}
                 className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 mr-2"
               >

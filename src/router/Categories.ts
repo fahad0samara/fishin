@@ -44,7 +44,7 @@ router.post("/add", async (req, res) => {
 });
 
 //PUT (Update) Category:
-router.put("/categories/:categoryId", async (req, res) => {
+router.put("/update/:categoryId", async (req, res) => {
   try {
     const updatedCategory = await Category.findByIdAndUpdate(
       req.params.categoryId,
@@ -64,7 +64,7 @@ router.put("/categories/:categoryId", async (req, res) => {
 
 
 //DELETE Category
-router.delete("/categories/:categoryId", async (req, res) => {
+router.delete("/delete/:categoryId", async (req, res) => {
   try {
     const deletedCategory = await Category.findByIdAndDelete(
       req.params.categoryId
