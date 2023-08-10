@@ -21,6 +21,8 @@ interface productState {
   loading: boolean;
   error: unknown;
   message: string | null;
+  currentPage: number;
+  totalPages: number;
 }
 
 const productSlice = createSlice({
@@ -30,6 +32,10 @@ const productSlice = createSlice({
     loading: false,
     error: null,
     message: null,
+    currentPage: 1,
+    totalPages: 1,
+    
+    
   } as productState,
     reducers: {
         clearError(state) {
@@ -49,9 +55,19 @@ const productSlice = createSlice({
       })
       .addCase(
         fetchProduct.fulfilled,
-        (state, action: PayloadAction<product[]>) => {
+        (
+          state,
+          action: PayloadAction<{
+            products: product[];
+            currentPage: number;
+            totalPages: number;
+          }>
+        ) => {
           state.loading = false;
-          state.product = action.payload;
+          state.product = action.payload.products;
+          state.currentPage = action.payload.currentPage;
+          state.totalPages = action.payload.totalPages;
+          
         }
       )
       .addCase(

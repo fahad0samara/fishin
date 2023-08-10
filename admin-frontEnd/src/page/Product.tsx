@@ -40,17 +40,24 @@ interface FormData {
 }
 
 const Product: React.FC = () => {
-     const {product, loading, error} = useSelector(
-       (state: RootState) => state.category
-     );
+  const {product, loading, error, totalPages, currentPage} = useSelector(
+    (state: RootState) => state.product
+  );
 
-    
   const {category} = useSelector((state: RootState) => state.category);
 
-const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
+  const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
+  
   useEffect(() => {
     dispatch(fetchCategories());
-  }, [dispatch]);
+  dispatch(fetchProduct({page: currentPage, limit: 10}));
+      
+    
+
+  }, [dispatch, currentPage]);
+   const handlePageChange = newPage => {
+     dispatch(fetchProduct({page: newPage, limit: 10}));
+   };
 
   const [colors, setColors] = useState<Color[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -126,15 +133,13 @@ const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
     }));
   };
 
-      const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const {name, value} = e.target;
-        setFormData(prevData => ({
-          ...prevData,
-          [name]: value,
-        }));
-      };
-
-    
+  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const {name, value} = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
 
   const handleSizeChange = (selectedOptions: any[]) => {
     const selectedSizes = selectedOptions.map(option => option.value);
@@ -144,57 +149,61 @@ const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
     }));
   };
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
-        const formDataWithImages = new FormData();
-        formDataWithImages.append("name", formData.name);
-        formDataWithImages.append("price", formData.price.toString());
-        formDataWithImages.append("category", formData.category);
-        formDataWithImages.append("description", formData.description);
+    const formDataWithImages = new FormData();
+    formDataWithImages.append("name", formData.name);
+    formDataWithImages.append("price", formData.price.toString());
+    formDataWithImages.append("category", formData.category);
+    formDataWithImages.append("description", formData.description);
 
-        formData.images.forEach(image => {
-        formDataWithImages.append("images", image);
-        });
+    formData.images.forEach(image => {
+      formDataWithImages.append("images", image);
+    });
 
-        formDataWithImages.append("brand", formData.brand);
+    formDataWithImages.append("brand", formData.brand);
 
-        formData.selectedColors.forEach(colorId => {
-        formDataWithImages.append("colors", colorId);
-        });
+    formData.selectedColors.forEach(colorId => {
+      formDataWithImages.append("colors", colorId);
+    });
 
-        formData.selectedSizes.forEach(sizeId => {
-        formDataWithImages.append("sizes", sizeId);
-        });
-      
+    formData.selectedSizes.forEach(sizeId => {
+      formDataWithImages.append("sizes", sizeId);
+    });
 
-        try {
-    
-                // dispatch createProduct
-                dispatch(createProduct(formDataWithImages)),
-                  {
-                    headers: {
-                      "Content-Type": "multipart/form-data",
-                    },
-                  };
-            
+    try {
+      // dispatch createProduct
+      const response = await dispatch(createProduct(formDataWithImages));
+
+      console.log("Product added:", response.payload);
+
+      // Clear the form after successful submission
+      setFormData({
+        name: "",
+        price: 0,
+        category: "",
+        description: "",
+        images: [],
+        brand: "",
+        selectedColors: [],
+        selectedSizes: [],
+      });
+    } catch (error: any) {
+      console.error("Error adding product:", error.response);
+    }
+  };
+  //loading
+  if (loading) {
+    return <h1>Loading...</h1>;
+  }
+  //error
+  if (error) {
+    return <h1>{error.message}</h1>;
+  }
 
 
-        // Clear the form after successful submission
-        setFormData({
-            name: "",
-            price: 0,
-            category: "",
-            description: "",
-            images: [],
-            brand: "",
-            selectedColors: [],
-            selectedSizes: [],
-        });
-        } catch (error:any) {
-        console.error("Error adding product:", error.response);
-        }
-    };
+
 
   return (
     <div className="p-4 ">
@@ -386,6 +395,76 @@ const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
           Add Product
         </button>
       </form>
+      <div className="container mx-auto p-8">
+        <h2 className="text-2xl font-semibold mb-4">Product List</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto border">
+            <thead>
+              <tr>
+                <th className="border p-2">Images</th>
+                <th className="border p-2">Name</th>
+                <th className="border p-2">Price</th>
+                <th className="border p-2">Description</th>
+                <th className="border p-2">Category</th>
+                <th className="border p-2">Brand</th>
+                <th className="border p-2">Colors</th>
+                <th className="border p-2">Sizes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {product.map(product => (
+                <tr key={product._id}>
+                  <td className="border p-2">
+                    <div className="flex">
+                      {product.images.slice(0, 2).map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`${product.name} Image ${index + 1}`}
+                          className="h-20 w-20 object-contain m-1"
+                        />
+                      ))}
+                    </div>
+                  </td>
+                  <td className="border p-2">{product.name}</td>
+                  <td className="border p-2">${product.price}</td>
+                  <td className="border p-2">{product.description}</td>
+                  <td className="border p-2">{product.category.name}</td>
+                  <td className="border p-2">{product.brand}</td>
+                  <td className="border p-2">
+                    {product.colors.map(color => color.name).join(", ")}
+                  </td>
+                  <td className="border p-2">
+                    {product.sizes.map(size => size.name).join(", ")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-center mt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-l"
+          >
+            Previous
+          </button>
+          {totalPages > 0 && (
+            <span className="bg-gray-300 py-2 px-4">
+              Page {currentPage} of {totalPages}
+            </span>
+          )}
+          {currentPage < totalPages && totalPages > 0 && (
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-r"
+            >
+              Next
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

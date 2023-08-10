@@ -20,12 +20,10 @@ export interface ErrorResponse {
 
 export const createProduct = createAsyncThunk<
   Product,
-  FormData, // Use the correct type for your form data
+  FormData,
   {rejectValue: ErrorResponse}
->("products/createProduct", async (ProductData, thunkAPI) => {
+>("products/createProduct", async (formDataWithImages, thunkAPI) => {
   try {
-    const formDataWithImages = ProductData.formDataWithImages; // Extract form data from the payload
-
     const response = await axios.post(
       "http://localhost:3000/products/add",
       formDataWithImages,
@@ -36,6 +34,15 @@ export const createProduct = createAsyncThunk<
       }
     );
     return response.data;
+ 
+    
+
+    
+     
+      
+     
+      
+    
   } catch (error) {
     const axiosError = error as AxiosError<ErrorResponse>;
     return thunkAPI.rejectWithValue(
@@ -43,6 +50,7 @@ export const createProduct = createAsyncThunk<
     );
   }
 });
+
 
 
 export const updateProduct = createAsyncThunk<
@@ -80,18 +88,25 @@ export const deleteProduct = createAsyncThunk<
   }
 });
 
+// ...
 export const fetchProduct = createAsyncThunk<
-  Product[],
-  void,
-  {rejectValue: ErrorResponse}
->("products/fetchProduct", async (_, thunkAPI) => {
+  { products: Product[]; currentPage: number; totalPages: number }, // Return pagination info
+  { page: number; limit: number },
+  { rejectValue: ErrorResponse }
+>("products/fetchProduct", async ({ page, limit }, thunkAPI) => {
   try {
-    const response = await axios.get("http://localhost:3000/products/get");
-    return response.data;
+    const response = await axios.get(`http://localhost:3000/products/get?page=${page}&limit=${limit}`);
+    return {
+      products: response.data.products,
+      currentPage: page,
+      totalPages: response.data.totalPages,
+    };
   } catch (error) {
     const axiosError = error as AxiosError<ErrorResponse>;
     return thunkAPI.rejectWithValue(
-      axiosError.response?.data || {message: "An error occurred"}
+      axiosError.response?.data || { message: "An error occurred" }
     );
   }
 });
+// ...
+

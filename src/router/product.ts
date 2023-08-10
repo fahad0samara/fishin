@@ -70,15 +70,33 @@ router.post("/add", upload.array("images", 5), async (req, res) => {
 
 
 
-// Get all products
+// Get all products with pagination
+// Get all products with pagination
 router.get("/get", async (req, res) => {
+  const page = parseInt(req.query.page as string) || 1; // Get the requested page number from query
+  const limit = parseInt(req.query.limit as string) || 10; // Get the requested limit from query
+
   try {
-    const products = await Product.find().populate("category colors sizes");
-    res.status(200).json(products);
+    const totalProducts = await Product.countDocuments();
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const products = await Product.find()
+      .populate("category colors sizes")
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({ products, currentPage: page, totalPages });
+    console.log(
+    
+       page, totalPages 
+
+    );
+    
   } catch (error) {
     res.status(500).json({ message: "Error fetching products" });
   }
 });
+
 
 // Get a single product by ID
 router.get("/:productId", async (req, res) => {
