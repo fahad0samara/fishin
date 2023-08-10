@@ -1,23 +1,13 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 
-import { Key } from "react";
+
 import { createProduct, deleteProduct, fetchProduct, updateProduct } from "./productThunks";
+import { Product } from "../../type";
 
-interface product {
-  _id: Key | null | undefined;
 
-  name: string;
-  price: number;
-  category: string;
-  description: string;
-  images: File[];
-  brand: string;
-  selectedColors: string[];
-  selectedSizes: string[];
-}
 
 interface productState {
-  product: product[];
+  product: Product[];
   loading: boolean;
   error: unknown;
   message: string | null;
@@ -58,7 +48,7 @@ const productSlice = createSlice({
         (
           state,
           action: PayloadAction<{
-            products: product[];
+            products: Product[];
             currentPage: number;
             totalPages: number;
           }>
@@ -67,7 +57,6 @@ const productSlice = createSlice({
           state.product = action.payload.products;
           state.currentPage = action.payload.currentPage;
           state.totalPages = action.payload.totalPages;
-          
         }
       )
       .addCase(
@@ -83,7 +72,7 @@ const productSlice = createSlice({
       })
       .addCase(
         createProduct.fulfilled,
-        (state, action: PayloadAction<product>) => {
+        (state, action: PayloadAction<Product>) => {
           state.loading = false;
           state.product.push(action.payload); // Add the new product to the state
         }
@@ -101,7 +90,7 @@ const productSlice = createSlice({
       })
       .addCase(
         updateProduct.fulfilled,
-        (state, action: PayloadAction<product>) => {
+        (state, action: PayloadAction<Product>) => {
           state.loading = false;
           state.product = state.product.map(product => {
             if (product._id === action.payload._id) {
@@ -124,7 +113,7 @@ const productSlice = createSlice({
       })
       .addCase(
         deleteProduct.fulfilled,
-        (state, action: PayloadAction<number>) => {
+        (state, action: PayloadAction<unknown>) => {
           state.loading = false;
           state.product = state.product.filter(
             product => product._id !== action.payload

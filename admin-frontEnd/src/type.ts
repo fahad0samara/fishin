@@ -1,4 +1,40 @@
+export interface Color {
+  _id: string;
+  name: string;
+  code: string;
+}
 
+export interface Size {
+  _id: string;
+  name: string;
+}
+
+export interface FormData {
+  name: string;
+  price: number;
+  category: string;
+  description: string;
+  images: File[];
+  brand: string;
+  selectedColors: string[];
+  selectedSizes: string[];
+}
+
+export interface reviews {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    __v: number;
+  };
+  product: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 
 export interface Product {
   _id: string;
@@ -12,7 +48,7 @@ export interface Product {
   };
   description: string;
   images: string[];
-  reviews: any[]; // You can replace this with the actual review type if available
+  reviews: reviews[];
   brand: string;
   colors: {
     _id: string;
@@ -20,11 +56,8 @@ export interface Product {
     name: string;
     __v: number;
   }[];
-  sizes: {
-    _id: string;
-    name: string;
-    __v: number;
-  }[];
+  sizes: Size[];
+
   availability: boolean;
   __v: number;
 }
