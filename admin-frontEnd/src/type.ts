@@ -9,7 +9,7 @@ export interface Size {
   name: string;
 }
 
-export interface FormData {
+export interface formData {
   name: string;
   price: number;
   category: string;
@@ -61,3 +61,5 @@ export interface Product {
   availability: boolean;
   __v: number;
 }
+
+

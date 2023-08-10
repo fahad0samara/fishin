@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {useState, useEffect, ChangeEvent, FormEvent} from "react";
 import axios from "axios";
@@ -5,7 +6,7 @@ import {fetchCategories} from "../redux/category/categoryThunks";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../redux/store";
 import {useDispatch, useSelector} from "react-redux";
-import Select, {ActionMeta, MultiValue} from "react-select";
+import Select, { MultiValue} from "react-select";
 import {
   createProduct,
   deleteProduct,
@@ -15,8 +16,8 @@ import {
 } from "../redux/Product/productThunks";
 import {toast} from "react-toastify";
 
-import {Color, Size} from "../type";
-import {FaEdit, FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
+import {Color, Product, Size, formData} from "../type";
+import { FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
 
 const Product: React.FC = () => {
   const {product, loading, error, totalPages, currentPage} = useSelector(
@@ -42,11 +43,13 @@ const Product: React.FC = () => {
 
   const [colors, setColors] = useState<Color[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<formData>({
     name: "",
+    category: "",
+   
 
     price: 0,
-    Product: "",
+   
     description: "",
     images: [],
     brand: "",
@@ -109,7 +112,7 @@ const Product: React.FC = () => {
 
 
 
-  const handleUpdateRemoveImage = (indexToRemove: number) => {
+  const handleUpdateRemoveImage = (indexToRemove: React.Key | null | undefined) => {
     setUpdatedProductData(prevData => ({
       ...prevData,
       images: prevData.images.filter((_: any, index: number) => index !== indexToRemove),
@@ -217,11 +220,7 @@ const Product: React.FC = () => {
       formDataWithImages.append("sizes", sizeId);
     });
 
-    console.log(
-      "🚀 ~ file: AdminProduct.tsx ~ line 217 ~ handleSubmit ~ formDataWithImages",
-      formDataWithImages
-    );
-    
+  
 
 
 
@@ -233,7 +232,9 @@ const Product: React.FC = () => {
       setFormData({
         name: "",
         price: 0,
-        Product: "",
+        category: "",
+      
+     
         description: "",
         images: [],
         brand: "",
@@ -259,34 +260,23 @@ const Product: React.FC = () => {
     }
   };
 
-  const [updatedProductData, setUpdatedProductData] = useState({
-    name: product.name || "",
-    price: product.price || 0,
-    Product: product.Product || "",
-    description: product.description || "",
-    images: product.images || [],
-    
-  
-
-    brand: product.brand || "",
-    selectedColors: product.colors || [], // Assuming product.colors contains the color IDs
-    selectedSizes: product.sizes || [], // Assuming product.sizes contains the size IDs
-  });
+  const [updatedProductData, setUpdatedProductData] = useState({})
 
   const handleEditClick = (product: Product) => {
-    setSelectedProductId(product._id);
-    setUpdatedProductData({
-      name: product.name,
-      price: product.price,
-      category: product.category._id,
-      description: product.description,
-      images: product.images,
-      brand: product.brand,
-      selectedColors: product.colors.map((color: { _id: any; }) => color._id),
-      selectedSizes: product.sizes.map((size: { _id: any; }) => size._id),
-    });
-    setIsEditModalOpen(true);
-  };
+  //@ts-ignore
+  setSelectedProductId(product._id);
+  setUpdatedProductData({
+    name: product.name,
+    price: product.price,
+    category: product.category._id,
+    description: product.description,
+    images: product.images,
+    brand: product.brand,
+    selectedColors: product.colors.map((color: Color) => color._id),
+    selectedSizes: product.sizes.map((size: Size) => size._id),
+  });
+  setIsEditModalOpen(true);
+};
 
   const handleUpdate = async (e: FormEvent) => {
     e.preventDefault();
@@ -557,7 +547,7 @@ const Product: React.FC = () => {
                 <tr key={product._id}>
                   <td className="border p-2">
                     <div className="flex">
-                      {product.images.slice(0, 7).map((image, index) => (
+                      {product.images.slice(0, 4).map((image, index) => (
                         <img
                           key={index}
                           src={image}

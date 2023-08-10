@@ -131,19 +131,30 @@ router.put(
 
       // Delete images from Azure Blob Storage
       const imageUrls = existingProduct.images;
-      await Promise.all(
-        imageUrls.map(async imageUrl => {
-          try {
-            const url = new URL(imageUrl);
-            const blobName = url.pathname.substring(1); // Remove the leading slash
-            const blockBlobClient =
-              containerClient.getBlockBlobClient(blobName);
-            await blockBlobClient.delete();
-          } catch (error) {
-            console.error("Error deleting blob:", imageUrl, error);
-          }
-        })
-      );
+ await Promise.all(
+   imageUrls.map(async imageUrl => {
+     try {
+       const blobName = imageUrl.split("/").slice(-1)[0];
+       const blockBlobClient =
+         containerClient.getBlockBlobClient(blobName);
+       await blockBlobClient.delete();
+       console.log(`Deleted ${imageUrl}`);
+           console.log("Blob deleted:", blobName);
+     
+   
+
+ 
+     } catch (error) {
+       console.error("Error deleting blob:", imageUrl, error);
+     }
+   })
+ );
+
+
+
+      
+
+
 
       // Update the product in DB and update its images on Azure Blob storage
       const files = req.files as Express.Multer.File[];
@@ -188,7 +199,7 @@ router.put(
       ).populate("category colors sizes");
 
       res.status(200).json(updatedProduct);
-      console.log("Updated product:", updatedProduct);
+    
     } catch (error) {
       console.error(error);
       res.status(500).json({message: "Error updating product"});
