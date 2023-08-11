@@ -32,7 +32,11 @@ export const createProduct = createAsyncThunk<
 
 export const updateProduct = createAsyncThunk<
   Product,
-  {productId: string; formDataWithImages: FormData},
+  {
+    productId: 
+    number
+    ; formDataWithImages: FormData
+  },
   {rejectValue: ErrorResponse}
 >(
   "products/updateProduct",
