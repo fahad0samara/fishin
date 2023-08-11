@@ -33,10 +33,7 @@ const Product: React.FC = () => {
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  useEffect(() => {
-    dispatch(fetchCategories());
-    dispatch(fetchProduct({page: currentPage, limit: 10}));
-  }, [dispatch, currentPage]);
+ 
   const handlePageChange = (newPage: number) => {
     dispatch(fetchProduct({page: newPage, limit: 10}));
   };
@@ -58,15 +55,12 @@ const Product: React.FC = () => {
   });
 
   useEffect(() => {
-    // Fetch categories, colors, and sizes from dynamic data source
-    const fetchDynamicData = async () => {
+    const fetchData = async () => {
       try {
-        const colorsResponse = await axios.get<Color[]>(
-          "http://localhost:3000/colorsSizes/colors"
-        );
-        const sizesResponse = await axios.get<Size[]>(
-          "http://localhost:3000/colorsSizes/sizes"
-        );
+        const [colorsResponse, sizesResponse] = await Promise.all([
+          axios.get<Color[]>("http://localhost:3000/colorsSizes/colors"),
+          axios.get<Size[]>("http://localhost:3000/colorsSizes/sizes"),
+        ]);
 
         setColors(colorsResponse.data);
         setSizes(sizesResponse.data);
@@ -75,8 +69,12 @@ const Product: React.FC = () => {
       }
     };
 
-    fetchDynamicData();
-  }, []);
+    dispatch(fetchCategories());
+    dispatch(fetchProduct({page: currentPage, limit: 10}));
+    fetchData();
+  }, [dispatch, currentPage]);
+
+
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -228,19 +226,24 @@ const Product: React.FC = () => {
       await dispatch(createProduct(formDataWithImages));
       toast.success("Product created successfully");
 
+
+    
+
       // Clear the form after successful submission
       setFormData({
         name: "",
         price: 0,
         category: "",
-      
-     
+
         description: "",
         images: [],
         brand: "",
         selectedColors: [],
         selectedSizes: [],
       });
+
+          await dispatch(fetchProduct({page: currentPage, limit: 10}));
+
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
