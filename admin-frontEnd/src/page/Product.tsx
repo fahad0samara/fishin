@@ -6,7 +6,7 @@ import {fetchCategories} from "../redux/category/categoryThunks";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../redux/store";
 import {useDispatch, useSelector} from "react-redux";
-import Select, { MultiValue} from "react-select";
+import Select, {MultiValue} from "react-select";
 import {
   createProduct,
   deleteProduct,
@@ -17,7 +17,8 @@ import {
 import {toast} from "react-toastify";
 
 import {Color, Product, Size, formData} from "../type";
-import { FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
+import {FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
+import {validateInputsProduct} from "../error/Valid";
 
 const Product: React.FC = () => {
   const {product, loading, error, totalPages, currentPage} = useSelector(
@@ -33,7 +34,7 @@ const Product: React.FC = () => {
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
- 
+
   const handlePageChange = (newPage: number) => {
     dispatch(fetchProduct({page: newPage, limit: 10}));
   };
@@ -43,15 +44,24 @@ const Product: React.FC = () => {
   const [formData, setFormData] = useState<formData>({
     name: "",
     category: "",
-   
 
     price: 0,
-   
+
     description: "",
     images: [],
     brand: "",
     selectedColors: [],
     selectedSizes: [],
+  });
+  const [inputErrors, setInputErrors] = useState({
+    name: "",
+    category: "",
+    price: "",
+    description: "",
+    images: "",
+    brand: "",
+    selectedColors: "",
+    selectedSizes: "",
   });
 
   useEffect(() => {
@@ -74,18 +84,6 @@ const Product: React.FC = () => {
     fetchData();
   }, [dispatch, currentPage]);
 
-
-
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const {name, value} = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
   const handleUpdateInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -94,6 +92,12 @@ const Product: React.FC = () => {
       ...prevData,
       [name]: value,
     }));
+     setInputErrors(prevErrors => ({
+       ...prevErrors,
+       [name]: "", // Clear the error message for this input
+     }));
+
+
   };
 
   const handleUpdateImageChange0 = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,18 +106,23 @@ const Product: React.FC = () => {
       ...prevData,
       images: [...prevData.images, ...files],
     }));
-  
 
- };
+       setInputErrors(prevErrors => ({
+         ...prevErrors,
+         images: "", // Clear the error message for images
+       }));
 
 
+  };
 
-
-
-  const handleUpdateRemoveImage = (indexToRemove: React.Key | null | undefined) => {
+  const handleUpdateRemoveImage = (
+    indexToRemove: React.Key | null | undefined
+  ) => {
     setUpdatedProductData(prevData => ({
       ...prevData,
-      images: prevData.images.filter((_: any, index: number) => index !== indexToRemove),
+      images: prevData.images.filter(
+        (_: any, index: number) => index !== indexToRemove
+      ),
     }));
   };
 
@@ -130,6 +139,10 @@ const Product: React.FC = () => {
       ...prevData,
       selectedColors,
     }));
+     setInputErrors(prevErrors => ({
+       ...prevErrors,
+       selectedColors: "", // Clear the error message for selectedColors
+     }));
   };
 
   const handleUpdateCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -138,6 +151,14 @@ const Product: React.FC = () => {
       ...prevData,
       [name]: value,
     }));
+     setInputErrors(prevErrors => ({
+       ...prevErrors,
+       category: "", // Clear the error message for category
+     }));
+
+
+
+
   };
 
   const handleUpdateSizeChange = (selectedOptions: MultiValue<any>) => {
@@ -145,6 +166,24 @@ const Product: React.FC = () => {
     setUpdatedProductData(prevData => ({
       ...prevData,
       selectedSizes,
+    }));
+        setInputErrors(prevErrors => ({
+          ...prevErrors,
+          selectedSizes: "", // Clear the error message for selectedSizes
+        }));
+  };
+
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const {name, value} = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      [name]: "", // Clear the error message for this input
     }));
   };
 
@@ -154,12 +193,19 @@ const Product: React.FC = () => {
       ...prevData,
       images: [...prevData.images, ...files],
     }));
+
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      images: "", // Clear the error message for images
+    }));
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
     setFormData(prevData => ({
       ...prevData,
-      images: prevData.images.filter((_: any, index: number) => index !== indexToRemove),
+      images: prevData.images.filter(
+        (_: any, index: number) => index !== indexToRemove
+      ),
     }));
   };
 
@@ -170,11 +216,15 @@ const Product: React.FC = () => {
     }));
   };
 
-  const handleColorChange = (selectedOptions: any[]) => {
+  const handleColorChange = (selectedOptions: MultiValue<any>) => {
     const selectedColors = selectedOptions.map(option => option.value);
     setFormData(prevData => ({
       ...prevData,
       selectedColors,
+    }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      selectedColors: "", // Clear the error message for selectedColors
     }));
   };
 
@@ -184,19 +234,41 @@ const Product: React.FC = () => {
       ...prevData,
       [name]: value,
     }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      category: "", // Clear the error message for category
+    }));
   };
 
-  const handleSizeChange = (selectedOptions: any[]) => {
+  const handleSizeChange = (selectedOptions: MultiValue<any>) => {
     const selectedSizes = selectedOptions.map(option => option.value);
     setFormData(prevData => ({
       ...prevData,
       selectedSizes,
     }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      selectedSizes: "", // Clear the error message for selectedSizes
+    }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-  
+    const {isValid, errors} = validateInputsProduct(
+      formData.name,
+      formData.category,
+      formData.price.toString(),
+      formData.description,
+      formData.images.map(file => file.name), // Convert File objects to their names (or URLs)
+      formData.brand,
+      formData.selectedColors,
+      formData.selectedSizes
+    );
+
+    if (!isValid) {
+      setInputErrors(errors);
+      return;
+    }
 
     const formDataWithImages = new FormData();
     formDataWithImages.append("name", formData.name);
@@ -218,16 +290,9 @@ const Product: React.FC = () => {
       formDataWithImages.append("sizes", sizeId);
     });
 
-  
-
-
-
     try {
       await dispatch(createProduct(formDataWithImages));
       toast.success("Product created successfully");
-
-
-    
 
       // Clear the form after successful submission
       setFormData({
@@ -241,9 +306,18 @@ const Product: React.FC = () => {
         selectedColors: [],
         selectedSizes: [],
       });
+      setInputErrors({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        images: "",
+        brand: "",
+        selectedColors: "",
+        selectedSizes: "",
+      });
 
-          await dispatch(fetchProduct({page: currentPage, limit: 10}));
-
+      await dispatch(fetchProduct({page: currentPage, limit: 10}));
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
@@ -263,31 +337,46 @@ const Product: React.FC = () => {
     }
   };
 
-  const [updatedProductData, setUpdatedProductData] = useState({})
+  const [updatedProductData, setUpdatedProductData] = useState<formData>({
+    
+  });
 
   const handleEditClick = (product: Product) => {
-  //@ts-ignore
-  setSelectedProductId(product._id);
-  setUpdatedProductData({
-    name: product.name,
-    price: product.price,
-    category: product.category._id,
-    description: product.description,
-    images: product.images,
-    brand: product.brand,
-    selectedColors: product.colors.map((color: Color) => color._id),
-    selectedSizes: product.sizes.map((size: Size) => size._id),
-  });
-  setIsEditModalOpen(true);
-};
+    //@ts-ignore
+    setSelectedProductId(product._id);
+    setUpdatedProductData({
+      name: product.name,
+      price: product.price,
+      category: product.category._id,
+      description: product.description,
+      images: product.images,
+      brand: product.brand,
+      selectedColors: product.colors.map((color: Color) => color._id),
+      selectedSizes: product.sizes.map((size: Size) => size._id),
+    });
+    setIsEditModalOpen(true);
+  };
 
   const handleUpdate = async (e: FormEvent) => {
+  const {isValid, errors} = validateInputsProduct(
+    updatedProductData.name,
+    updatedProductData.category,
+    updatedProductData.price.toString(),
+    updatedProductData.description,
+    updatedProductData.images.map(file => file.name), // Convert File objects to their names (or URLs)
+    updatedProductData.brand,
+    updatedProductData.selectedColors,
+    updatedProductData.selectedSizes
+  );
+
+  if (!isValid) {
+    setInputErrors(errors);
+    return;
+  }
+
+
     e.preventDefault();
-    if (updatedProductData.images.length === 0) {
-      // Display an error message or handle validation here
-      console.log("No images selected");
-      return;
-    }
+    
     const formDataWithImages = new FormData();
     formDataWithImages.append("name", updatedProductData.name);
     formDataWithImages.append("price", updatedProductData.price.toString());
@@ -329,7 +418,6 @@ const Product: React.FC = () => {
     }
   };
 
-
   //loading
   if (loading) {
     return <h1>Loading...</h1>;
@@ -356,6 +444,9 @@ const Product: React.FC = () => {
             value={formData.name}
             onChange={handleInputChange}
           />
+          {inputErrors.name && (
+            <p className="text-red-500 text-sm">{inputErrors.name}</p>
+          )}
         </label>
         <label className="block mb-2">
           Price:
@@ -366,6 +457,9 @@ const Product: React.FC = () => {
             value={formData.price}
             onChange={handleInputChange}
           />
+          {inputErrors.price && (
+            <p className="text-red-500 text-sm">{inputErrors.price}</p>
+          )}
         </label>
         <label className="block mb-2">
           Category:
@@ -382,6 +476,9 @@ const Product: React.FC = () => {
               </option>
             ))}
           </select>
+          {inputErrors.category && (
+            <p className="text-red-500 text-sm">{inputErrors.category}</p>
+          )}
         </label>
         <label className="block mb-2">
           Description:
@@ -391,6 +488,9 @@ const Product: React.FC = () => {
             value={formData.description}
             onChange={handleInputChange}
           />
+          {inputErrors.description && (
+            <p className="text-red-500 text-sm">{inputErrors.description}</p>
+          )}
         </label>
         <label className="block mb-2">
           Brand:
@@ -401,42 +501,50 @@ const Product: React.FC = () => {
             value={formData.brand}
             onChange={handleInputChange}
           />
+          {inputErrors.brand && (
+            <p className="text-red-500 text-sm">{inputErrors.brand}</p>
+          )}
         </label>
         <>
           <span className="text-lg font-semibold">Images:</span>
           <div className="border rounded p-3 mt-2">
             <div className="grid grid-cols-3 gap-4 bg">
-              {formData.images.map((image: Blob | MediaSource, index: React.Key | null | undefined) => (
-                <div
-                  onClick={e => e.stopPropagation()}
-                  key={index}
-                  className="relative group"
-                >
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Image ${index + 1}`}
-                    className="w-full h-24 object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
-                  />
-                  <button
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
-                    type="button"
-                    onClick={() => handleRemoveImage(index)}
+              {formData.images.map(
+                (
+                  image: Blob | MediaSource,
+                  index: React.Key | null | undefined
+                ) => (
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    key={index}
+                    className="relative group"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`Image ${index + 1}`}
+                      className="w-full h-24 object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
+                    />
+                    <button
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )
+              )}
             </div>
 
             {formData.images.length > 0 && (
@@ -474,6 +582,9 @@ const Product: React.FC = () => {
             accept="image/*"
             onChange={handleImageChange}
           />
+          {inputErrors.images && (
+            <p className="text-red-500 text-sm">{inputErrors.images}</p>
+          )}
         </>
 
         <div className="mb-4">
@@ -482,7 +593,9 @@ const Product: React.FC = () => {
             isMulti
             name="colors"
             value={formData.selectedColors
-              .filter((colorId: string) => colors.some(color => color._id === colorId))
+              .filter((colorId: string) =>
+                colors.some(color => color._id === colorId)
+              )
               .map((colorId: string) => ({
                 value: colorId,
                 label: colors.find(color => color._id === colorId)?.name,
@@ -502,6 +615,9 @@ const Product: React.FC = () => {
             onChange={handleColorChange}
             className="basic-multi-select"
           />
+          {inputErrors.selectedColors && (
+            <p className="text-red-500 text-sm">{inputErrors.selectedColors}</p>
+          )}
         </div>
         <div className="mb-4">
           <label className="block font-semibold mb-1">Sizes:</label>
@@ -519,6 +635,10 @@ const Product: React.FC = () => {
             onChange={handleSizeChange}
             className="basic-multi-select"
           />
+          {inputErrors.selectedSizes && (
+            <p className="text-red-500 text-sm">{inputErrors.selectedSizes}</p>
+          )}
+          
         </div>
 
         <button
@@ -710,42 +830,47 @@ const Product: React.FC = () => {
                   <span className="text-lg font-semibold">Images:</span>
                   <div className="border rounded p-3 mt-2">
                     <div className="grid grid-cols-3 gap-4 bg">
-                      {updatedProductData.images.map((image: string | Blob | MediaSource | undefined, index: React.Key | null | undefined) => (
-                        <div
-                          onClick={e => e.stopPropagation()}
-                          key={index}
-                          className="relative group"
-                        >
-                          <img
-                            src={
-                              typeof image === "string"
-                                ? image
-                                : URL.createObjectURL(image)
-                            }
-                            alt={`Image ${index + 1}`}
-                            alt="product"
-                            className="w-full h-14  object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
-                          />
-                          <button
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
-                            type="button"
-                            onClick={() => handleUpdateRemoveImage(index)}
+                      {updatedProductData.images.map(
+                        (
+                          image: string | Blob | MediaSource | undefined,
+                          index: React.Key | null | undefined
+                        ) => (
+                          <div
+                            onClick={e => e.stopPropagation()}
+                            key={index}
+                            className="relative group"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
+                            <img
+                              src={
+                                typeof image === "string"
+                                  ? image
+                                  : URL.createObjectURL(image)
+                              }
+                              alt={`Image ${index + 1}`}
+                              alt="product"
+                              className="w-full h-14  object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
+                            />
+                            <button
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
+                              type="button"
+                              onClick={() => handleUpdateRemoveImage(index)}
                             >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
 
                     <div className="mt-4 flex space-x-4">
