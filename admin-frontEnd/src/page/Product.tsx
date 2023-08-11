@@ -92,12 +92,10 @@ const Product: React.FC = () => {
       ...prevData,
       [name]: value,
     }));
-     setInputErrors(prevErrors => ({
-       ...prevErrors,
-       [name]: "", // Clear the error message for this input
-     }));
-
-
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      [name]: "", // Clear the error message for this input
+    }));
   };
 
   const handleUpdateImageChange0 = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,12 +105,10 @@ const Product: React.FC = () => {
       images: [...prevData.images, ...files],
     }));
 
-       setInputErrors(prevErrors => ({
-         ...prevErrors,
-         images: "", // Clear the error message for images
-       }));
-
-
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      images: "", // Clear the error message for images
+    }));
   };
 
   const handleUpdateRemoveImage = (
@@ -139,10 +135,10 @@ const Product: React.FC = () => {
       ...prevData,
       selectedColors,
     }));
-     setInputErrors(prevErrors => ({
-       ...prevErrors,
-       selectedColors: "", // Clear the error message for selectedColors
-     }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      selectedColors: "", // Clear the error message for selectedColors
+    }));
   };
 
   const handleUpdateCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -151,14 +147,10 @@ const Product: React.FC = () => {
       ...prevData,
       [name]: value,
     }));
-     setInputErrors(prevErrors => ({
-       ...prevErrors,
-       category: "", // Clear the error message for category
-     }));
-
-
-
-
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      category: "", // Clear the error message for category
+    }));
   };
 
   const handleUpdateSizeChange = (selectedOptions: MultiValue<any>) => {
@@ -167,10 +159,10 @@ const Product: React.FC = () => {
       ...prevData,
       selectedSizes,
     }));
-        setInputErrors(prevErrors => ({
-          ...prevErrors,
-          selectedSizes: "", // Clear the error message for selectedSizes
-        }));
+    setInputErrors(prevErrors => ({
+      ...prevErrors,
+      selectedSizes: "", // Clear the error message for selectedSizes
+    }));
   };
 
   const handleInputChange = (
@@ -292,7 +284,6 @@ const Product: React.FC = () => {
 
     try {
       await dispatch(createProduct(formDataWithImages));
-      toast.success("Product created successfully");
 
       // Clear the form after successful submission
       setFormData({
@@ -318,6 +309,8 @@ const Product: React.FC = () => {
       });
 
       await dispatch(fetchProduct({page: currentPage, limit: 10}));
+      toast.success("Product created successfully");
+      setIsCreateModalOpen(false);
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
@@ -338,7 +331,14 @@ const Product: React.FC = () => {
   };
 
   const [updatedProductData, setUpdatedProductData] = useState<formData>({
-    
+    name: "",
+    price: 0,
+    category: "",
+    description: "",
+    images: [],
+    brand: "",
+    selectedColors: [],
+    selectedSizes: [],
   });
 
   const handleEditClick = (product: Product) => {
@@ -358,25 +358,24 @@ const Product: React.FC = () => {
   };
 
   const handleUpdate = async (e: FormEvent) => {
-  const {isValid, errors} = validateInputsProduct(
-    updatedProductData.name,
-    updatedProductData.category,
-    updatedProductData.price.toString(),
-    updatedProductData.description,
-    updatedProductData.images.map(file => file.name), // Convert File objects to their names (or URLs)
-    updatedProductData.brand,
-    updatedProductData.selectedColors,
-    updatedProductData.selectedSizes
-  );
+    const {isValid, errors} = validateInputsProduct(
+      updatedProductData.name,
+      updatedProductData.category,
+      updatedProductData.price.toString(),
+      updatedProductData.description,
+      updatedProductData.images.map(file => file.name), // Convert File objects to their names (or URLs)
+      updatedProductData.brand,
+      updatedProductData.selectedColors,
+      updatedProductData.selectedSizes
+    );
 
-  if (!isValid) {
-    setInputErrors(errors);
-    return;
-  }
-
+    if (!isValid) {
+      setInputErrors(errors);
+      return;
+    }
 
     e.preventDefault();
-    
+
     const formDataWithImages = new FormData();
     formDataWithImages.append("name", updatedProductData.name);
     formDataWithImages.append("price", updatedProductData.price.toString());
@@ -430,224 +429,16 @@ const Product: React.FC = () => {
   return (
     <div className="p-4 ">
       <h2 className="text-xl font-semibold mb-4">Add Product</h2>
-      <form
-        className="flex flex-col space-y-4 max-w-2xl mx-auto  w-full"
-        onSubmit={handleSubmit}
-        encType="multipart/form-data"
+      <button
+        onClick={() => {
+          setIsCreateModalOpen(true);
+        }}
+        className={
+          "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+        }
       >
-        <label className="block mb-2">
-          Name:
-          <input
-            className="border rounded w-full py-2 px-3"
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-          />
-          {inputErrors.name && (
-            <p className="text-red-500 text-sm">{inputErrors.name}</p>
-          )}
-        </label>
-        <label className="block mb-2">
-          Price:
-          <input
-            className="border rounded w-full py-2 px-3"
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleInputChange}
-          />
-          {inputErrors.price && (
-            <p className="text-red-500 text-sm">{inputErrors.price}</p>
-          )}
-        </label>
-        <label className="block mb-2">
-          Category:
-          <select
-            className="border rounded w-full py-2 px-3"
-            name="category"
-            value={formData.category}
-            onChange={handleCategoryChange}
-          >
-            <option value="">Select a category</option>
-            {category.map(category => (
-              <option key={category._id} value={category._id?.toString()}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          {inputErrors.category && (
-            <p className="text-red-500 text-sm">{inputErrors.category}</p>
-          )}
-        </label>
-        <label className="block mb-2">
-          Description:
-          <textarea
-            className="border rounded w-full py-2 px-3"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-          />
-          {inputErrors.description && (
-            <p className="text-red-500 text-sm">{inputErrors.description}</p>
-          )}
-        </label>
-        <label className="block mb-2">
-          Brand:
-          <input
-            className="border rounded w-full py-2 px-3"
-            type="text"
-            name="brand"
-            value={formData.brand}
-            onChange={handleInputChange}
-          />
-          {inputErrors.brand && (
-            <p className="text-red-500 text-sm">{inputErrors.brand}</p>
-          )}
-        </label>
-        <>
-          <span className="text-lg font-semibold">Images:</span>
-          <div className="border rounded p-3 mt-2">
-            <div className="grid grid-cols-3 gap-4 bg">
-              {formData.images.map(
-                (
-                  image: Blob | MediaSource,
-                  index: React.Key | null | undefined
-                ) => (
-                  <div
-                    onClick={e => e.stopPropagation()}
-                    key={index}
-                    className="relative group"
-                  >
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt={`Image ${index + 1}`}
-                      className="w-full h-24 object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
-                    />
-                    <button
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-
-            {formData.images.length > 0 && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full"
-                  type="button"
-                  onClick={handleRemoveAllImages}
-                >
-                  Remove All Images
-                </button>
-              </div>
-            )}
-            <div className="mt-4 flex ">
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full mt-4"
-                type="button"
-                onClick={e => {
-                  e.preventDefault();
-                  //dontloadthe user clike the input
-                  e.stopPropagation();
-                  //dontloadthe user clike the input
-                  document.getElementsByName("images")[0].click();
-                }}
-              >
-                Add More Images
-              </button>
-            </div>
-          </div>
-          <input
-            className="hidden"
-            type="file"
-            name="images"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-          />
-          {inputErrors.images && (
-            <p className="text-red-500 text-sm">{inputErrors.images}</p>
-          )}
-        </>
-
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">Colors:</label>
-          <Select
-            isMulti
-            name="colors"
-            value={formData.selectedColors
-              .filter((colorId: string) =>
-                colors.some(color => color._id === colorId)
-              )
-              .map((colorId: string) => ({
-                value: colorId,
-                label: colors.find(color => color._id === colorId)?.name,
-              }))}
-            options={colors.map(color => ({
-              value: color._id,
-              label: (
-                <div className="flex items-center">
-                  <div
-                    className="w-4 h-4 rounded-full mr-2"
-                    style={{backgroundColor: color.code}}
-                  ></div>
-                  {color.name}
-                </div>
-              ),
-            }))}
-            onChange={handleColorChange}
-            className="basic-multi-select"
-          />
-          {inputErrors.selectedColors && (
-            <p className="text-red-500 text-sm">{inputErrors.selectedColors}</p>
-          )}
-        </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">Sizes:</label>
-          <Select
-            isMulti
-            name="sizes"
-            value={formData.selectedSizes.map((sizeId: string) => ({
-              value: sizeId,
-              label: sizes.find(size => size._id === sizeId)?.name,
-            }))}
-            options={sizes.map(size => ({
-              value: size._id,
-              label: size.name,
-            }))}
-            onChange={handleSizeChange}
-            className="basic-multi-select"
-          />
-          {inputErrors.selectedSizes && (
-            <p className="text-red-500 text-sm">{inputErrors.selectedSizes}</p>
-          )}
-          
-        </div>
-
-        <button
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          type="submit"
-        >
-          Add Product
-        </button>
-      </form>
+        Add Product
+      </button>
       <div className="container mx-auto p-8">
         <h2 className="text-2xl font-semibold mb-4">Product List</h2>
         <div className="overflow-x-auto">
@@ -739,6 +530,291 @@ const Product: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Create Category Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
+          <div
+            className="    max-h-[700px]
+          overflow-y-auto "
+          >
+            <div className="lg:m-10">
+              <form
+                onSubmit={handleSubmit}
+                encType="multipart/form-data"
+                className="relative border border-gray-100 space-y-3 max-w-screen-xl mx-auto rounded-md bg-white p-6 shadow-xl lg:p-10"
+              >
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <label className=""> Name Product</label>
+                    <input
+                      name="name"
+                      type="text"
+                      placeholder="ex."
+                      className="mt-2 h-12 w-full rounded-md bg-gray-100 px-3"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                    />
+                    {inputErrors.name && (
+                      <p className="text-red-500 text-sm">{inputErrors.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="">price Product </label>
+                    <input
+                      name="price"
+                      type="number"
+                      placeholder="ex.4.6"
+                      className="mt-2 h-12 w-full rounded-md bg-gray-100 px-3"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                    />
+                    {inputErrors.price && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.price}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="">Brand Product</label>
+                    <input
+                      type="text"
+                      placeholder="ex."
+                      className="mt-2 h-12 w-full rounded-md bg-gray-100 px-3"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleInputChange}
+                    />
+                    {inputErrors.brand && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.brand}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <label className="block mb-2">
+                  Description:
+                  <textarea
+                    className="mt-2 h-12 w-full rounded-md bg-gray-100 px-3"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  />
+                  {inputErrors.description && (
+                    <p className="text-red-500 text-sm">
+                      {inputErrors.description}
+                    </p>
+                  )}
+                </label>
+
+                <div>
+                  <label className="block mb-2">
+                    Category:
+                    <select
+                      className="border rounded w-full py-2 px-3"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleCategoryChange}
+                    >
+                      <option value="">Select a category</option>
+                      {category.map(category => (
+                        <option
+                          key={category._id}
+                          value={category._id?.toString()}
+                        >
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    {inputErrors.category && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.category}
+                      </p>
+                    )}
+                  </label>
+                </div>
+                <label className="block font-semibold mb-1">Colors:</label>
+                <Select
+                  isMulti
+                  name="colors"
+                  value={formData.selectedColors
+                    .filter((colorId: string) =>
+                      colors.some(color => color._id === colorId)
+                    )
+                    .map((colorId: string) => ({
+                      value: colorId,
+                      label: colors.find(color => color._id === colorId)?.name,
+                    }))}
+                  options={colors.map(color => ({
+                    value: color._id,
+                    label: (
+                      <div className="flex items-center">
+                        <div
+                          className="w-4 h-4 rounded-full mr-2"
+                          style={{backgroundColor: color.code}}
+                        ></div>
+                        {color.name}
+                      </div>
+                    ),
+                  }))}
+                  onChange={handleColorChange}
+                  className="basic-multi-select"
+                />
+                {inputErrors.selectedColors && (
+                  <p className="text-red-500 text-sm">
+                    {inputErrors.selectedColors}
+                  </p>
+                )}
+                <div className="mb-4">
+                  <label className="block font-semibold mb-1">Sizes:</label>
+                  <Select
+                    isMulti
+                    name="sizes"
+                    value={formData.selectedSizes.map((sizeId: string) => ({
+                      value: sizeId,
+                      label: sizes.find(size => size._id === sizeId)?.name,
+                    }))}
+                    options={sizes.map(size => ({
+                      value: size._id,
+                      label: size.name,
+                    }))}
+                    onChange={handleSizeChange}
+                    className="basic-multi-select"
+                  />
+                  {inputErrors.selectedSizes && (
+                    <p className="text-red-500 text-sm">
+                      {inputErrors.selectedSizes}
+                    </p>
+                  )}
+                </div>
+
+                <>
+                  <span className="text-lg font-semibold">Images:</span>
+                  {formData.images.length > 0 && (
+                    <div className="border rounded p-2 mt-2 ">
+                      <div className="grid grid-cols-3 gap-4 ">
+                        {formData.images.map(
+                          (
+                            image: Blob | MediaSource,
+                            index: React.Key | null | undefined
+                          ) => (
+                            <div
+                              onClick={e => e.stopPropagation()}
+                              key={index}
+                              className="relative group"
+                            >
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={`Image ${index + 1}`}
+                                className="w-full h-16 object-cover rounded border border-gray-200 shadow-md transition-transform transform group-hover:scale-110"
+                              />
+                              <button
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 2a8 8 0 100 16 8 8 0 000-16zm.293 9.293a1 1 0 011.414 0L13 12.586l2.293-2.293a1 1 0 111.414 1.414L14.414 14l2.293 2.293a1 1 0 01-1.414 1.414L13 15.414l-2.293 2.293a1 1 0 01-1.414-1.414L11.586 14 9.293 11.707a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-4 flex space-x-8">
+                    {formData.images.length > 0 && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full"
+                          type="button"
+                          onClick={handleRemoveAllImages}
+                        >
+                          Remove All Images
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full mt-4"
+                      type="button"
+                      onClick={e => {
+                        e.preventDefault();
+                        //dontloadthe user clike the input
+                        e.stopPropagation();
+                        //dontloadthe user clike the input
+                        document.getElementsByName("images")[0].click();
+                      }}
+                    >
+                      {
+                        //if there is no image show upload image
+                        formData.images.length === 0
+                          ? "Upload Images"
+                          : "Add More Images"
+                      }
+                    </button>
+                  </div>
+                  <input
+                    className="hidden"
+                    type="file"
+                    name="images"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  {inputErrors.images && (
+                    <p className="text-red-500 text-sm">{inputErrors.images}</p>
+                  )}
+                </>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setIsCreateModalOpen(false);
+
+                      setSelectedProductId(null);
+                      //remove the erorr
+                      setInputErrors({
+                        name: "",
+                        price: "",
+                        category: "",
+                        description: "",
+                        images: "",
+                        brand: "",
+                        selectedColors: "",
+                        selectedSizes: "",
+                      });
+                    }}
+                    type="button"
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 mr-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={
+                      "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
+                    }
+                  >
+                    Create
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEditModalOpen && selectedProductId !== null && (
         <div className="fixed bg-slate-400 inset-0 flex items-center justify-center z-50 bg-opacity-50">
           <div
@@ -771,6 +847,9 @@ const Product: React.FC = () => {
                       value={updatedProductData.name}
                       onChange={handleUpdateInputChange}
                     />
+                    {inputErrors.name && (
+                      <p className="text-red-500 text-sm">{inputErrors.name}</p>
+                    )}
                   </div>
                   <div className="w-1/2">
                     <label className="block mb-2">Price:</label>
@@ -781,6 +860,11 @@ const Product: React.FC = () => {
                       value={updatedProductData.price}
                       onChange={handleUpdateInputChange}
                     />
+                    {inputErrors.price && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.price}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex space-x-4">
@@ -802,6 +886,11 @@ const Product: React.FC = () => {
                         </option>
                       ))}
                     </select>
+                    {inputErrors.category && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.category}
+                      </p>
+                    )}
                   </div>
                   <div className="w-1/2 mt-1">
                     <label className="block ">
@@ -813,6 +902,11 @@ const Product: React.FC = () => {
                         value={updatedProductData.brand}
                         onChange={handleUpdateInputChange}
                       />
+                      {inputErrors.brand && (
+                        <p className="text-red-500 text-sm">
+                          {inputErrors.brand}
+                        </p>
+                      )}
                     </label>
                   </div>
                 </div>
@@ -824,6 +918,11 @@ const Product: React.FC = () => {
                     value={updatedProductData.description}
                     onChange={handleUpdateInputChange}
                   />
+                  {inputErrors.description && (
+                    <p className="text-red-500 text-sm">
+                      {inputErrors.description}
+                    </p>
+                  )}
                 </div>
                 {/* Add image handling */}
                 <>
@@ -909,6 +1008,9 @@ const Product: React.FC = () => {
                     accept="image/*"
                     onChange={handleUpdateImageChange0}
                   />
+                  {inputErrors.images && (
+                    <p className="text-red-500 text-sm">{inputErrors.images}</p>
+                  )}
                 </>
 
                 <div className="grid grid-cols-2 gap-5">
@@ -933,6 +1035,11 @@ const Product: React.FC = () => {
                       onChange={handleupdateColorChange}
                       className="basic-multi-select"
                     />
+                    {inputErrors.selectedColors && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.selectedColors}
+                      </p>
+                    )}
                   </div>
                   <div className="mb-4">
                     <label className="block font-semibold mb-1">Sizes:</label>
@@ -952,6 +1059,11 @@ const Product: React.FC = () => {
                       onChange={handleUpdateSizeChange}
                       className="basic-multi-select"
                     />
+                    {inputErrors.selectedSizes && (
+                      <p className="text-red-500 text-sm">
+                        {inputErrors.selectedSizes}
+                      </p>
+                    )}
                   </div>
                 </div>
 
