@@ -4,16 +4,25 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.AZURE_STORAGE_CONNECTION_STRING
 );
 
-const containerName = "fashion-app";
+const containerNameProduct = "fashion-app";
+const containerNameUser = "fashion-app-user";
 
-const containerClient = blobServiceClient.getContainerClient(containerName);
+const containerClientProduct =blobServiceClient.getContainerClient(containerNameProduct);
+const containerClientUser = blobServiceClient.getContainerClient(containerNameUser);
 
-const createContainerIfNotExists = async () => {
-  const containerExists = await containerClient.exists();
-  if (!containerExists) {
-    await containerClient.create();
-    console.log(`The container "${containerName}" has been created`);
-  }
-};
+export { containerClientProduct, containerClientUser };
+  
 
-export {createContainerIfNotExists, containerClient};
+    
+
+  
+
+    
+
+
+
+
+
+
+
+

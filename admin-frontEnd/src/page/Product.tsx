@@ -14,7 +14,7 @@ import {
 } from "../redux/Product/productThunks";
 import {toast} from "react-toastify";
 
-import {Color, Product, Size, formData} from "../type";
+import {Color, Size, formData} from "../type";
 import {FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
 import {validateInputsProduct} from "../error/Valid";
 import CreateProductModal from "./product/CreateProductModal";

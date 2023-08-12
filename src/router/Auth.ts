@@ -1,7 +1,8 @@
 
-import express, {Express, Request, Response, NextFunction} from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
+
 const router = express.Router();
-import {
+import  {
   Category,
   Color,
   Size,
@@ -13,91 +14,254 @@ import {
   Cart,
 } from "../model/Model";
 
-interface AuthenticatedRequest extends Request {
-  userId: string;
-  user: any; // You can define a more specific User type here if needed
-}
 
+declare module "express-serve-static-core" {
+  interface Request {
+    user: any;
+  }
+}
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { containerClientUser } from "../config/azure-config";
+import sharp from "sharp";
+import multer from "multer";
+import { generateDefaultImage, generateRandomColor, sanitizeFileName } from "../config/generateImage";
 
 
-// Register a new user
-router.post("/register", async (req, res) => {
+const storage = multer.memoryStorage();
+const upload = multer({storage: storage});
+
+router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
-    const {name, email, password} = req.body;
+    const { name, email, password } = req.body;
+    console.log(
+      "🚀 ~ file: user.ts ~ line 27 ~ router.post ~ req.body",
+      req.body
+    );
+    
 
-    // Check if the email is already registered
+    // Check if a user with the provided email already exists
     const existingUser = await User.findOne({email});
     if (existingUser) {
-      return res.status(400).json({message: "Email already registered"});
+      return res
+        .status(409)
+        .json({message: "User with this email already exists"});
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let imageUrl = null; // Default to null if no image is uploaded
+    if (req.file) {
+      const file = req.file as Express.Multer.File;
+      const compressedImage = await sharp(file.buffer)
+        .resize(500, 500)
+        .jpeg({quality: 80})
+        .toBuffer();
+      
+      // Generate a random filename
+      const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "");
+      const filename = `${sanitizedFileName}-${Date.now()}`;
 
-    // Create the user
+      const blockBlobClient = containerClientUser.getBlockBlobClient(filename);
+      await blockBlobClient.upload(compressedImage, compressedImage.length);
+
+      imageUrl = blockBlobClient.url;
+    } else {
+      // Generate a default image with a colored background based on the user's name or the first character of their name
+      const defaultImageText = name.charAt(0).toUpperCase(); // First character of the name
+      const backgroundColor = generateRandomColor(); // Generate a random color
+      const defaultImageBuffer = await generateDefaultImage(
+        defaultImageText,
+        backgroundColor
+      );
+      const defaultImageFilename = `default-${Date.now()}.jpg`;
+
+      const blockBlobClient =
+        containerClientUser.getBlockBlobClient(defaultImageFilename);
+      await blockBlobClient.upload(
+        defaultImageBuffer,
+        defaultImageBuffer.length
+      );
+
+      imageUrl = blockBlobClient.url;
+    }
+
     const newUser = new User({
       name,
       email,
-      password: hashedPassword,
+      password,
+      profileImage: imageUrl,
+      // ... other fields
     });
 
     await newUser.save();
+
     res.status(201).json({message: "User registered successfully"});
-  } catch (error) {
-    res.status(500).json({message: "Registration failed"});
+  } catch (error:any) {
+    res
+      .status(500)
+      .json({message: "Error registering user", error: error.message});
   }
 });
 
-// User login
+
+
+
 router.post("/login", async (req, res) => {
   try {
     const {email, password} = req.body;
 
-    // Check if user exists
+    // Check if a user with the provided email exists
     const user = await User.findOne({email});
     if (!user) {
-      return res.status(401).json({message: "Invalid credentials"});
+      return res.status(401).json({message: "Authentication failed"});
     }
 
-    // Compare passwords
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({message: "Invalid credentials"});
+    // Compare the provided password with the stored password
+    if (password !== user.password) {
+      return res.status(401).json({message: "Authentication failed"});
     }
 
-    // Generate JWT token
-    const token = jwt.sign({userId: user._id}, "your_secret_key_here", {
+    // Generate a token for authentication
+    const token = jwt.sign({id: user._id, role: user.role}, "your-secret-key", {
       expiresIn: "1h",
     });
 
-    res.status(200).json({token, userId: user._id});
-  } catch (error) {
-    res.status(500).json({message: "Login failed"});
+    res.status(200).json({message: "Authentication successful", token});
+  } catch (error:any) {
+    res.status(500).json({message: "Error during login", error: error.message});
   }
 });
 
+function authenticateToken(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
 
+  if (!token) {
+    return res.status(401).json({ message: "Authentication failed" });
+  }
 
-
-
-
-// Update user profile
-// Update user profile
-router.put("/profile", async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true });
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
+  jwt.verify(token, "your-secret-key", (err: any, user: any) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid token" });
     }
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    res.status(500).json({ message: "Profile update failed" });
+    req.user = user;
+    next();
+  });
+}
+
+
+
+
+
+
+
+// Example usage of the middleware
+router.get("/protected-route", authenticateToken, (req, res) => {
+  res
+    .status(200)
+    .json({message: "Access granted to protected route", user: req.user});
+});
+
+
+
+//
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    // Fetch user data from the database
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({message: "User not found"});
+    }
+
+    res.status(200).json(user);
+  } catch (error:any) {
+    res
+      .status(500)
+      .json({message: "Error fetching user data", error: error.message});
   }
 });
+
+
+
+router.put(
+  "/update-profile/:userId",
+  upload.single("profileImage"),
+  async (req, res) => {
+    try {
+      const userId = req.params.userId; // User ID from the route parameter
+      const {name} = req.body;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({message: "User not found"});
+      }
+
+      if (req.file) {
+        const file = req.file as Express.Multer.File;
+        const compressedImage = await sharp(file.buffer)
+          .resize(500, 500)
+          .jpeg({quality: 80})
+          .toBuffer();
+
+        const sanitizedFileName = sanitizeFileName(file.originalname);
+        const filename = `${sanitizedFileName}-${Date.now()}`;
+
+        const blockBlobClient =
+          containerClientUser.getBlockBlobClient(filename);
+        await blockBlobClient.upload(compressedImage, compressedImage.length);
+
+        const imageUrl = blockBlobClient.url;
+
+        // Delete the previous profile image if it exists
+        if (user.profileImage) {
+          const previousImageName = user.profileImage.split("/").pop(); // Extract the image name
+          const previousImageBlobClient =
+            containerClientUser.getBlockBlobClient(previousImageName);
+          await previousImageBlobClient.deleteIfExists();
+        }
+
+        // Update user's profileImage field with the new image URL
+        user.profileImage = imageUrl;
+      }
+
+      // Update user's other information
+      user.name = name;
+
+      await user.save();
+
+      res.status(200).json({message: "Profile updated successfully", user});
+    } catch (error:any) {
+      res
+        .status(500)
+        .json({message: "Error updating profile", error: error.message});
+    }
+  }
+);
+
+
+
+
+
+// router for get all user
+router.get("/users", async (req, res) => {
+  try {
+    
+      const users = await User.find({}, {password: 0}); 
+    
+    res.status(200).json(users);
+    
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching user data", error: error.message });
+  }
+
+});
+
+
+
+
 
 // Delete user account
 router.delete("/delete", async (req, res) => {

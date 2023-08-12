@@ -1,22 +1,14 @@
 import express from "express";
-import {
-  containerClient,
-  createContainerIfNotExists,
-} from "../config/azure-config";
+import {containerClientProduct} from "../config/azure-config";
 const router = express.Router();
 import sharp from "sharp";
 
 import multer from "multer";
 import {Product} from "../model/Model";
+import { sanitizeFileName } from "../config/generateImage";
 // configure Multer to use Azure Blob Storage as the storage engine
 const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
-const sanitizeFileName = (fileName: string) => {
-  return fileName.replace(/[^a-zA-Z0-9-_.]/g, "").replace(/\s+/g, "_");
-
- 
-};
-
 
 
 router.post("/add", upload.array("images", 5), async (req, res) => {
@@ -38,11 +30,12 @@ router.post("/add", upload.array("images", 5), async (req, res) => {
 
     const uploadedImageURLs = await Promise.all(
       compressedImages.map<Promise<string>>(async (compressedImage, index) => {
-        const sanitizedFileName = sanitizeFileName(files[index].originalname); 
-        console.log("Sanitized Filename:", sanitizedFileName); 
+        const sanitizedFileName = sanitizeFileName(files[index].originalname);
+        console.log("Sanitized Filename:", sanitizedFileName);
         const filename = `${sanitizedFileName}-${Date.now()}`;
-        
-        const blockBlobClient = containerClient.getBlockBlobClient(filename);
+
+        const blockBlobClient =
+          containerClientProduct.getBlockBlobClient(filename);
         await blockBlobClient.upload(compressedImage, compressedImage.length);
         return blockBlobClient.url;
       })
@@ -54,21 +47,15 @@ router.post("/add", upload.array("images", 5), async (req, res) => {
       image_url: uploadedImageURLs[0],
       images: uploadedImageURLs,
     });
-  
-  
 
     await newProduct.save();
 
     res.status(201).json(newProduct);
-    
   } catch (error) {
     console.error(error);
     res.status(400).json({message: "Error creating product"});
   }
 });
-
-
-
 
 // Get all products with pagination
 // Get all products with pagination
@@ -85,23 +72,24 @@ router.get("/get", async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    res.status(200).json({ products, currentPage: page, totalPages });
+    res.status(200).json({products, currentPage: page, totalPages});
   } catch (error) {
-    res.status(500).json({ message: "Error fetching products" });
+    res.status(500).json({message: "Error fetching products"});
   }
 });
-
 
 // Get a single product by ID
 router.get("/:productId", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.productId).populate("category colors sizes");
+    const product = await Product.findById(req.params.productId).populate(
+      "category colors sizes"
+    );
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({message: "Product not found"});
     }
     res.status(200).json(product);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching product" });
+    res.status(500).json({message: "Error fetching product"});
   }
 });
 
@@ -109,7 +97,6 @@ router.get("/:productId", async (req, res) => {
 //   "/update/:productId",
 //   upload.array("images", 5),
 //   async (req, res) => {
-  
 
 //     try {
 //       const productId = req.params.productId;
@@ -124,9 +111,7 @@ router.get("/:productId", async (req, res) => {
 //         return res.status(404).json({message: "Product not found"});
 //       }
 //       let newImageURLs: string[] = [];
-      
 
-   
 //   if (files && files.length > 0) {
 //     const imageUrls = existingProduct.images;
 //     await Promise.all(
@@ -169,10 +154,6 @@ router.get("/:productId", async (req, res) => {
 //     updatedData.images = uploadedImageURLs;
 //       }
 
-         
- 
-
-
 //       // Update the product data in the database
 //       const updatedProduct = await Product.findByIdAndUpdate(
 //         productId,
@@ -187,7 +168,6 @@ router.get("/:productId", async (req, res) => {
 //     }
 //   }
 // );
-
 
 router.put(
   "/update/:productId",
@@ -210,13 +190,14 @@ router.put(
       const imagesToDelete = existingProduct.images.filter(
         imageUrl => !updatedData.images.includes(imageUrl)
       );
+      
 
       await Promise.all(
         imagesToDelete.map(async imageUrl => {
           try {
             const blobName = imageUrl.split("/").slice(-1)[0];
             const blockBlobClient =
-              containerClient.getBlockBlobClient(blobName);
+              containerClientProduct.getBlockBlobClient(blobName);
             await blockBlobClient.delete();
             console.log(`Deleted ${imageUrl}`);
             console.log("Blob deleted:", blobName);
@@ -244,7 +225,7 @@ router.put(
             );
             const filename = `${sanitizedFileName}-${Date.now()}`;
             const blockBlobClient =
-              containerClient.getBlockBlobClient(filename);
+              containerClientProduct.getBlockBlobClient(filename);
             await blockBlobClient.upload(
               compressedImage,
               compressedImage.length
@@ -277,30 +258,6 @@ router.put(
   }
 );
 
-
-
-    
-
-    
-
-
-
- 
-
-
-    
-
-
-
-      
-
-
- 
-
-
-
-
-
 router.delete("/delete/:productId", async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId);
@@ -314,7 +271,8 @@ router.delete("/delete/:productId", async (req, res) => {
     await Promise.all(
       imageUrls.map(async imageUrl => {
         const blobName = imageUrl.split("/").pop(); // Extract the blob name from the URL
-        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        const blockBlobClient =
+          containerClientProduct.getBlockBlobClient(blobName);
         await blockBlobClient.delete();
       })
     );
@@ -327,12 +285,5 @@ router.delete("/delete/:productId", async (req, res) => {
     res.status(500).json({message: "Error deleting product"});
   }
 });
-
-
-
-
-
-
-
 
 export default router;

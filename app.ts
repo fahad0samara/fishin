@@ -46,7 +46,7 @@ app.get("/", (req, res, next) => {
   res.send("Hello World");
 });
 
-app.use("/api/auth", routerAuth); 
+app.use("/auth", routerAuth); 
 app.use("/categories", routerCategories);
 app.use("/colorsSizes", routerColorsSizes);
 app.use("/products", routerProducts);
