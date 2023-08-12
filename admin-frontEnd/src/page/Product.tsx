@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, {useState, useEffect, ChangeEvent, FormEvent} from "react";
+import  {useState, useEffect, ChangeEvent, FormEvent} from "react";
 
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../redux/store";
 import {useDispatch, useSelector} from "react-redux";
 import Select, {MultiValue} from "react-select";
 import {
-
   deleteProduct,
   fetchProduct,
   updateProduct,
@@ -19,14 +18,13 @@ import {Color, Product, Size, formData} from "../type";
 import {FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
 import {validateInputsProduct} from "../error/Valid";
 import CreateProductModal from "./product/CreateProductModal";
-import { fetchCategories } from "../redux/category/categoryThunks";
+import {fetchCategories} from "../redux/category/categoryThunks";
 import axios from "axios";
 
 const Product: React.FC = () => {
   const {product, loading, error, totalPages, currentPage} = useSelector(
     (state: RootState) => state.product
   );
-
 
   const {category} = useSelector((state: RootState) => state.category);
 
@@ -40,7 +38,8 @@ const Product: React.FC = () => {
 
   const handlePageChange = (newPage: number) => {
     dispatch(fetchProduct({page: newPage, limit: 10}));
-  };  useEffect(() => {
+  };
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const [colorsResponse, sizesResponse] = await Promise.all([
@@ -73,8 +72,6 @@ const Product: React.FC = () => {
     selectedColors: "",
     selectedSizes: "",
   });
-
- 
 
   const handleUpdateInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -157,8 +154,6 @@ const Product: React.FC = () => {
     }));
   };
 
-
-
   const handleRemoveProduct = async () => {
     try {
       if (selectedProductId !== null) {
@@ -201,7 +196,7 @@ const Product: React.FC = () => {
   };
 
   const handleUpdate = async (e: FormEvent) => {
-       e.preventDefault();
+    e.preventDefault();
     const {isValid, errors} = validateInputsProduct(
       updatedProductData.name,
       updatedProductData.category,
@@ -217,8 +212,6 @@ const Product: React.FC = () => {
       setInputErrors(errors);
       return;
     }
-
- 
 
     const formDataWithImages = new FormData();
     formDataWithImages.append("name", updatedProductData.name);
@@ -243,8 +236,6 @@ const Product: React.FC = () => {
       formDataWithImages.append("sizes", sizeId);
     });
 
-
-
     try {
       await dispatch(
         updateProduct({
@@ -253,37 +244,27 @@ const Product: React.FC = () => {
         })
       );
 
-        setInputErrors({
-          name: "",
-          price: "",
-          category: "",
-          description: "",
-          images: "",
-          brand: "",
-          selectedColors: "",
-          selectedSizes: "",
-        });
+      setInputErrors({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        images: "",
+        brand: "",
+        selectedColors: "",
+        selectedSizes: "",
+      });
 
-      
-      dispatch(fetchProduct({ page: currentPage, limit: 10 }));
-      
+      dispatch(fetchProduct({page: currentPage, limit: 10}));
 
-
-    
       toast.success("Product updated successfully");
       setIsEditModalOpen(false);
-      
-
-      
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
     }
   };
 
-
-
- 
   //error
   if (error) {
     return <h1> Error: {(error as ErrorResponse).message}</h1>;
@@ -666,13 +647,7 @@ const Product: React.FC = () => {
                       "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700"
                     }
                   >
-                    {
-                      loading
-                      ? "Updating Product..."
-                      : "Update Product"
-
-
-                    }
+                    {loading ? "Updating Product..." : "Update Product"}
                   </button>
                 </div>
               </form>
