@@ -1,20 +1,21 @@
 import {useState} from "react";
-import { useDispatch } from "react-redux";
-import { register } from "../redux/Auth/authThunks";
-import { AnyAction, ThunkDispatch } from "@reduxjs/toolkit";
-import { RootState } from "../redux/store";
+import {useDispatch, useSelector} from "react-redux";
 
-function Register() {
+import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
+import {RootState} from "../Redux/store";
+import {register} from "../auth/authThunks";
 
+import {useNavigate} from "react-router-dom";
+
+function  RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
+ const error = useSelector((state: RootState) => state.auth.error);
+  const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
 
-   const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
-
-  
-
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: {preventDefault: () => void}) => {
     e.preventDefault();
@@ -26,14 +27,27 @@ function Register() {
       formData.append("password", password);
       formData.append("profileImage", profileImage); // Make sure profileImage is properly set
 
-      await dispatch(register(formData)); // Pass formData directly
-
-      alert("User registered successfully");
+      await dispatch(register(formData));
+      console.log(
+        "User registered successfully. You can now login with the registered credentials."
+      );
+  
+navigate("/Profile");
+      
+      
     } catch (error) {
       console.error(error);
       alert("Error registering user");
     }
   };
+
+
+  //error
+  if (error) {
+    return <p>{error}</p>;
+  }
+  
+
 
 
 
@@ -105,6 +119,4 @@ function Register() {
   );
 }
 
-export default Register;
-
-
+export default  RegisterForm;

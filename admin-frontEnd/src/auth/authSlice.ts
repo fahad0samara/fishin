@@ -46,7 +46,7 @@ const authSlice = createSlice({
         state.loading = false;
 
         state.token = action.payload.token;
-        localStorage.setItem("token", action.payload.token);
+    
         state.isAuthenticated = true;
         state.isAdmin = action.payload.isAdmin;
         state.userId = (action.payload.user as {_id: string})._id;

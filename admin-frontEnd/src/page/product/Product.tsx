@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import  {useState, useEffect, ChangeEvent, FormEvent} from "react";
+import {useState, useEffect, ChangeEvent, FormEvent} from "react";
 
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
-import {RootState} from "../redux/store";
+
 import {useDispatch, useSelector} from "react-redux";
 import Select, {MultiValue} from "react-select";
 import {
@@ -11,15 +11,16 @@ import {
   fetchProduct,
   updateProduct,
   ErrorResponse,
-} from "../redux/Product/productThunks";
+} from "../../redux/Product/productThunks";
 import {toast} from "react-toastify";
 
-import {Color, Size, formData} from "../type";
+import {Color, Size, formData} from "../../type";
 import {FaExpeditedssl, FaTrashRestoreAlt} from "react-icons/fa";
-import {validateInputsProduct} from "../error/Valid";
-import CreateProductModal from "./product/CreateProductModal";
-import {fetchCategories} from "../redux/category/categoryThunks";
+import {validateInputsProduct} from "../../error/Valid";
+import CreateProductModal from "./CreateProductModal";
+import {fetchCategories} from "../../redux/Category/categoryThunks";
 import axios from "axios";
+import {RootState} from "../../Redux/store";
 
 const Product: React.FC = () => {
   const {product, loading, error, totalPages, currentPage} = useSelector(
@@ -178,7 +179,7 @@ const Product: React.FC = () => {
     selectedSizes: [],
   });
 
-  const handleEditClick = (product: Product) => {
+  const handleEditClick = (product: any) => {
     //@ts-ignore
     setSelectedProductId(product._id);
     setUpdatedProductData({

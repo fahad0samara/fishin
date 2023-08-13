@@ -7,11 +7,12 @@ import {
   updateCategory,
   deleteCategory,
   ErrorResponse,
-} from "../redux/category/categoryThunks";
+} from "../redux/Category/categoryThunks";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
-import {RootState} from "../redux/store";
+
 import {toast} from "react-toastify";
 import {validateInputs} from "../error/Valid";
+import {RootState} from "../Redux/store";
 function Category() {
   const {category, loading, error} = useSelector(
     (state: RootState) => state.category

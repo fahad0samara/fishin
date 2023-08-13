@@ -1,8 +1,7 @@
-
 import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios from "axios";
 import {clearUserData} from "./authSlice";
-import {REGISTER_URL, LOGIN_URL, LOGOUT_URL, FETCH_USER_URL} from "../../urls";
+import {REGISTER_URL, LOGIN_URL, LOGOUT_URL, FETCH_USER_URL} from "../urls";
 
 export interface UserData {
   _id?: string;
@@ -10,8 +9,7 @@ export interface UserData {
 
   email: string;
   password: string;
-    role: string;
-    
+  role: string;
 }
 interface LoginResponse {
   user: unknown;
@@ -106,6 +104,8 @@ export const logout = createAsyncThunk<void, void, {rejectValue: string}>(
     }
   }
 );
+
+//fetch user data
 export const fetchUserData = createAsyncThunk<
   User,
   void,
@@ -145,8 +145,7 @@ export const fetchUserData = createAsyncThunk<
   }
 });
 
-
-
+//update the user profile
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async (userData, {rejectWithValue}) => {

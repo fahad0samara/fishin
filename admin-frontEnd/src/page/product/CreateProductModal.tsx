@@ -11,7 +11,7 @@ import {toast} from "react-toastify";
 import {Color, Size, formData} from "../../type";
 import {validateInputsProduct} from "../../error/Valid";
 import {createProduct, fetchProduct} from "../../redux/Product/productThunks";
-import {fetchCategories} from "../../redux/category/categoryThunks";
+import {fetchCategories} from "../../redux/Category/categoryThunks";
 import {RootState} from "../../redux/store";
 interface CreateCategoryModalProps {
   isCreateModalOpen: boolean;

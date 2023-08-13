@@ -35,11 +35,7 @@ const upload = multer({storage: storage});
 router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(
-      "🚀 ~ file: user.ts ~ line 27 ~ router.post ~ req.body",
-      req.body
-    );
-    
+     console.log("Received registration request:", req.body);
 
     // Check if a user with the provided email already exists
     const existingUser = await User.findOne({email});
@@ -48,6 +44,12 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
         .status(409)
         .json({message: "User with this email already exists"});
     }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+  console.log("Hashing password...");
 
     let imageUrl = null; // Default to null if no image is uploaded
     if (req.file) {
@@ -84,19 +86,26 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
 
       imageUrl = blockBlobClient.url;
     }
-
+  console.log("Saving user to the database...");
     const newUser = new User({
       name,
       email,
-      password,
+      password: hashedPassword,
       profileImage: imageUrl,
-      // ... other fields
+      
+
     });
 
     await newUser.save();
-
-    res.status(201).json({message: "User registered successfully"});
+  console.log("User saved successfully:", newUser);
+    res.status(201).json({ message: "User registered successfully" });
+    console.log(
+      "🚀 ~ file: user.ts ~ line 93 ~ router.post ~ newUser",
+      newUser
+    );
+    
   } catch (error:any) {
+  console.log("Error registering user:", error);
     res
       .status(500)
       .json({message: "Error registering user", error: error.message});
@@ -113,21 +122,46 @@ router.post("/login", async (req, res) => {
     // Check if a user with the provided email exists
     const user = await User.findOne({email});
     if (!user) {
-      return res.status(401).json({message: "Authentication failed"});
+      return res.status(401).json({message:`the 
+        email ${email} is not found`});
+      
+        
+      
     }
 
-    // Compare the provided password with the stored password
-    if (password !== user.password) {
-      return res.status(401).json({message: "Authentication failed"});
+    // Check if the provided password matches the one in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({message: "the password is not correct"});
     }
-
     // Generate a token for authentication
-    const token = jwt.sign({id: user._id, role: user.role}, "your-secret-key", {
-      expiresIn: "1h",
-    });
+    
 
-    res.status(200).json({message: "Authentication successful", token});
+    const token = jwt.sign(
+      {id: user._id, name: user.name, email: user.email, role: user.role},
+      process.env.JWT_SECRET || "",
+      {expiresIn: "1d"}
+    );
+
+
+ 
+
+    res.status(200).json({message: "Authentication successful", 
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+    },
+
+  });
+  console.log(user);
+  
   } catch (error:any) {
+    console.log(error.message);
+    
     res.status(500).json({message: "Error during login", error: error.message});
   }
 });
@@ -156,10 +190,20 @@ function authenticateToken(req: Request, res: Response, next: NextFunction) {
 
 
 // Example usage of the middleware
-router.get("/protected-route", authenticateToken, (req, res) => {
-  res
-    .status(200)
-    .json({message: "Access granted to protected route", user: req.user});
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // Fetch user data from the database using userId
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Access granted to protected route", user });
+  } catch (error:any) {
+    res.status(500).json({ message: "Error fetching user data", error: error.message });
+  }
 });
 
 
