@@ -19,18 +19,16 @@ function LoginForm() {
     try {
       await dispatch(login({ email, password }));
       console.log('User logged in successfully.');
-      alert('User logged in successfully.');
+   
       navigate('/Profile');
+      
     } catch (error) {
       console.error(error);
       alert('Error logging in');
     }
   };
 
-  //eror
-  if (error) {
-    return <p>{error}</p>;
-  }
+console.log(error);
 
 
 
