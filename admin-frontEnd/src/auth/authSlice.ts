@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {createSlice} from "@reduxjs/toolkit";
-import {login, register, fetchUserData, logout} from "./authThunks";
+import { createSlice } from "@reduxjs/toolkit";
+import { login, register, fetchUserData, logout } from "./authThunks";
 
 interface AuthState {
   user: any | null;
@@ -26,37 +26,37 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    clearUserData: state => {
+    clearUserData: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
       state.isAdmin = false;
     },
-    clearError: state => {
+    clearError: (state) => {
       state.error = null;
     },
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
     builder
-      .addCase(login.pending, state => {
+      .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-
+        state.user = action.payload.user; // Update the user data
         state.token = action.payload.token;
-    
         state.isAuthenticated = true;
         state.isAdmin = action.payload.isAdmin;
-        state.userId = (action.payload.user as {_id: string})._id;
+        state.userId = (action.payload.user as { _id: string })._id;
+        localStorage.setItem("token", action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.loading = false;
         state.error = action.payload as string | null;
       })
-      .addCase(register.pending, state => {
+      .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -69,16 +69,18 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as unknown as string | null;
       })
-      .addCase(fetchUserData.pending, state => {
+      .addCase(fetchUserData.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchUserData.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
-        state.isAdmin = action.payload.isAdmin;
-        state.userId = (action.payload.user as {_id: string})._id;
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+          state.isAdmin = action.payload.isAdmin;
+          state.userId = (action.payload.user as { _id: string })._id;
+        }
       })
       .addCase(fetchUserData.rejected, (state, action) => {
         state.loading = false;
@@ -88,13 +90,14 @@ const authSlice = createSlice({
         state.isAdmin = false;
 
         state.error = action.payload as unknown as string | null;
+        console.log(state.error);
       })
       //logout
-      .addCase(logout.pending, state => {
+      .addCase(logout.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(logout.fulfilled, state => {
+      .addCase(logout.fulfilled, (state) => {
         state.loading = false;
         localStorage.removeItem("token");
 
@@ -111,6 +114,6 @@ const authSlice = createSlice({
   },
 });
 
-export const {clearUserData, clearError} = authSlice.actions;
+export const { clearUserData, clearError } = authSlice.actions;
 
 export default authSlice.reducer;

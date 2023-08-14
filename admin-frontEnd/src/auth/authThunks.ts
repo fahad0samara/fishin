@@ -10,6 +10,7 @@ export interface UserData {
   email: string;
   password: string;
   role: string;
+  
 }
 interface LoginResponse {
   user: unknown;
@@ -18,6 +19,7 @@ interface LoginResponse {
 }
 
 interface User {
+  token: string | null;
   user: unknown;
   isAdmin: boolean;
   id: number;
@@ -105,7 +107,6 @@ export const logout = createAsyncThunk<void, void, {rejectValue: string}>(
   }
 );
 
-//fetch user data
 export const fetchUserData = createAsyncThunk<
   User,
   void,
@@ -113,7 +114,9 @@ export const fetchUserData = createAsyncThunk<
 >("auth/fetchUserData", async (_, thunkAPI) => {
   const token = localStorage.getItem("token");
 
+
   if (!token) {
+    console.log("Token not available"); // Debug: Check if this block is executed
     thunkAPI.dispatch(logout()); // Logout the user if token is not available
     return thunkAPI.rejectWithValue({
       message: "User is not authenticated",
@@ -124,7 +127,6 @@ export const fetchUserData = createAsyncThunk<
   try {
     const response = await axios.get<User>(
       FETCH_USER_URL,
-
       {
         headers: {
           "Content-Type": "application/json",
@@ -144,6 +146,7 @@ export const fetchUserData = createAsyncThunk<
     throw error;
   }
 });
+
 
 //update the user profile
 export const updateProfile = createAsyncThunk(
