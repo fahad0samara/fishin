@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice } from "@reduxjs/toolkit";
-import { login, register, fetchUserData, logout } from "./authThunks";
+import {
+  login,
+  register,
+  fetchUserData,
+  logout,
+  updateProfile,
+} from "./authThunks";
 
 interface AuthState {
   user: any | null;
@@ -75,11 +81,13 @@ const authSlice = createSlice({
       })
       .addCase(fetchUserData.fulfilled, (state, action) => {
         if (action.payload.user) {
+          state.loading = false;
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
           state.isAdmin = action.payload.isAdmin;
           state.userId = (action.payload.user as { _id: string })._id;
+         
         }
       })
       .addCase(fetchUserData.rejected, (state, action) => {
@@ -110,7 +118,34 @@ const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | null;
+      })
+      //update profile
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+      state.loading = false;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      
+      
+      state.isAuthenticated = true;
+      state.isAdmin = action.payload.isAdmin;
+      state.userId = (action.payload.user as { _id: string })._id;
+
+     
+ 
+      
+    
+      })
+
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | null;
+        console.log(state.error);
       });
+      
   },
 });
 

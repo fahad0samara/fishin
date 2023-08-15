@@ -1,7 +1,7 @@
 import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios from "axios";
 import {clearUserData} from "./authSlice";
-import {REGISTER_URL, LOGIN_URL, LOGOUT_URL, FETCH_USER_URL} from "../urls";
+import {REGISTER_URL, LOGIN_URL, LOGOUT_URL, FETCH_USER_URL, UPDATE_USER_URL} from "../urls";
 
 export interface UserData {
   _id?: string;
@@ -25,6 +25,16 @@ interface User {
   id: number;
   email: string;
   name: string;
+}
+
+interface UpdateProfileArgs {
+  userId: number;
+  user: {
+    name: string;
+    email: string;
+    deleteProfileImage: boolean;
+    newProfileImage: File | null;
+  };
 }
 
 // Register user
@@ -148,23 +158,92 @@ export const fetchUserData = createAsyncThunk<
 });
 
 
-//update the user profile
-export const updateProfile = createAsyncThunk(
-  "auth/updateProfile",
-  async (userData, {rejectWithValue}) => {
-    try {
-      const response = await axios.put("/api/update-profile", userData); // Adjust the API endpoint
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message =
-          (error.response &&
-            error.response.data &&
-            error.response.data.message) ||
-          "Failed to update profile";
-        return rejectWithValue(message);
-      }
-      throw error;
-    }
+// // export const updateProfile = createAsyncThunk(
+//   "auth/updateProfile",
+//   async (args: UpdateProfileArgs, thunkAPI) => {
+//     const {userId, user} = args;
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       thunkAPI.dispatch(logout());
+//       return thunkAPI.rejectWithValue("User is not authenticated");
+//     }
+//     try {
+//       const response = await axios.put<User>(
+//         `http://localhost:3000/auth/update/
+//         ${userId}
+//         `,
+
+//         user,
+//         {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+//       return response.data;
+//     } catch (error) {
+//       if (axios.isAxiosError(error)) {
+//         const message =
+//           error.response?.data?.message || "Failed to update profile";
+//         return thunkAPI.rejectWithValue(message);
+//       }
+//       throw error;
+//     }
+//   }
+
+// );
+
+
+export const updateProfile = createAsyncThunk<
+  User,
+  UpdateProfileArgs,
+  { rejectValue: string }
+>("auth/updateProfile", async ({ userId, user }, thunkAPI) => {
+    console.log(userId); 
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    console.log("Token not available");
+    thunkAPI.dispatch(logout());
+    return thunkAPI.rejectWithValue("User is not authenticated");
   }
-);
+
+  const formData = new FormData();
+  formData.append("name", user.name);
+  formData.append("email", user.email);
+  formData.append("deleteProfileImage", user.deleteProfileImage.toString());
+
+  if (user.newProfileImage) {
+    formData.append("profileImage", user.newProfileImage);
+  }
+
+  try {
+    const response = await axios.put<User>(
+      `${UPDATE_USER_URL}/${userId}`, // Use _id for MongoDB update
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+
+   
+    // Convert _id to id in the response before updating Redux state
+   
+
+ 
+  } catch (error) {
+    console.log(error);
+    
+    if (axios.isAxiosError(error)) {
+      const message =
+        error.response?.data?.message || "Failed to update user profile";
+      return thunkAPI.rejectWithValue(message);
+    }
+    throw error;
+  }
+});

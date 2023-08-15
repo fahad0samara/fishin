@@ -4,6 +4,7 @@ export const REGISTER_URL = `${BASE_URL}/auth/register`;
 export const LOGIN_URL = `${BASE_URL}/auth/login`;
 export const LOGOUT_URL = `${BASE_URL}/auth/logout`;
 export const FETCH_USER_URL = `${BASE_URL}/auth/me`;
+export const UPDATE_USER_URL = `${BASE_URL}/auth/update`;
 
 export const ADD_TO_CART_URL = `${BASE_URL}/cart/add`;
 export const FETCH_CART_URL = (userId: string) =>

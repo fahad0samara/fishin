@@ -139,7 +139,7 @@ router.post("/login", async (req, res) => {
     // Generate a token for authentication
     const token = jwt.sign(
       {
-        id: user._id,
+        id: user.id,
       },
       "your-secret-key",
       {
@@ -151,7 +151,7 @@ router.post("/login", async (req, res) => {
       message: "Authentication successful",
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -206,28 +206,34 @@ router.get("/me", authenticateToken, async (req, res) => {
 
 router.put(
   "/update/:userId",
-  authenticateToken,
   upload.single("profileImage"),
   async (req, res) => {
     try {
+      
       const userId = req.params.userId;
+      
       const { name, email, deleteProfileImage } = req.body;
 
-      // Check if the user is updating their own profile
-      if (req.user.id !== userId) {
-        return res
-          .status(403)
-          .json({ message: "You're not authorized to update this profile" });
-      }
+   console.log(
+        "Received profile update request:",
+
+   );
+   
 
       // Fetch the user from the database
       const user = await User.findById(userId);
+      console.log(
+        "Received profile update request:",
+        user
+      );
+      
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       // Update user fields
+
       if (name) user.name = name;
       if (email) user.email = email;
 
@@ -265,7 +271,11 @@ router.put(
       await user.save();
 
       res.status(200).json({ message: "Profile updated successfully", user });
+      console.log(user.id);
+      
     } catch (error:any) {
+      console.log(error);
+      
       res
         .status(500)
         .json({ message: "Error updating profile", error: error.message });
