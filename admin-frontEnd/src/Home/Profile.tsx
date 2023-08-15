@@ -63,13 +63,23 @@ const Profile = () => {
     }
   };
 
-  const handleDeleteImage = () => {
+const handleDeleteImage = () => {
   setUpdateData({
     ...updateData,
     deleteProfileImage: true,
     newProfileImage: null, // Clear any selected new image
   });
 };
+
+const handleAddImage = () => {
+  setUpdateData({
+    ...updateData,
+    deleteProfileImage: false, // Clear the delete flag
+  });
+};
+
+
+
 
     const renderContent = () => {
     if (activeSection === 'orders') {
@@ -256,49 +266,75 @@ const Profile = () => {
           }
         />
       </div>
-   <div className="flex h-56 w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 p-5 text-center">
-  {(updateData.newProfileImage || user.profileImage) && !updateData.deleteProfileImage ? (
+<div className="flex h-56 w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 p-5 text-center">
+  {updateData.newProfileImage || user.profileImage || updateData.deleteProfileImage ? (
     <div className="flex flex-col items-center">
       <div className="relative">
-        <img
-          src={
-            updateData.newProfileImage
-              ? URL.createObjectURL(updateData.newProfileImage)
-              : user.profileImage
-          }
-          alt="Profile"
-          className="h-16 w-16 rounded-full"
-        />
-        <button
-          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full"
-          onClick={handleDeleteImage}
+        {updateData.deleteProfileImage ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+            <p className="text-white text-sm">Deleted</p>
+          </div>
+        ) : (
+          <img
+            src={
+              updateData.newProfileImage
+                ? URL.createObjectURL(updateData.newProfileImage)
+                : user.profileImage
+            }
+            alt="Profile"
+            className="h-16 w-16 rounded-full"
+          />
+        )}
+      </div>
+      {!updateData.deleteProfileImage && (
+        <div className="mt-2">
+          <button
+            className="text-sm text-blue-600 hover:underline focus:outline-none"
+            onClick={handleDeleteImage}
+          >
+            Delete Image
+          </button>
+        </div>
+      )}
+      <div className="mt-2">
+        <label
+          htmlFor="newProfileImage"
+          className="text-sm text-blue-600 hover:underline cursor-pointer"
         >
-          <p className="text-white text-sm">Delete</p>
-        </button>
+          {updateData.newProfileImage ? "Change Image" : "Add Image"}
+        </label>
+        <input
+          type="file"
+          id="newProfileImage"
+          accept="image/*"
+          onChange={handleFileChange}
+          onClick={handleAddImage} // Handle add image click
+          disabled={updateData.newProfileImage !== null}
+          className="hidden"
+        />
       </div>
     </div>
   ) : (
-    <div>
-      <p className="text-sm text-gray-600">
-        {updateData.deleteProfileImage ? "Image deleted" : "No image selected"}
-      </p>
+    <div className="text-center">
       <label
         htmlFor="newProfileImage"
-        className="text-sm text-blue-600 hover:underline cursor-pointer"
+        className="text-sm text-gray-600 hover:underline cursor-pointer"
       >
-        {updateData.newProfileImage ? "Change Image" : "Add Image"}
+        Add Profile Image
       </label>
       <input
         type="file"
         id="newProfileImage"
         accept="image/*"
         onChange={handleFileChange}
+        onClick={handleAddImage} // Handle add image click
         disabled={updateData.newProfileImage !== null}
         className="hidden"
       />
     </div>
   )}
 </div>
+
 
 
       <div className="flex justify-end py-4 sm:hidden">
