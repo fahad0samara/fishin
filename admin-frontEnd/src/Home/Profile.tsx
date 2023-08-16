@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../Redux/store";
-import { updateProfile, fetchUserData } from "../auth/authThunks";
+import {
+  updateProfile,
+  fetchUserData,
+  deleteUser,
+  logout,
+} from "../auth/authThunks";
 import { AnyAction, ThunkDispatch } from "@reduxjs/toolkit";
-import avatar from '../assets/avatar.png'
-
+import avatar from "../assets/avatar.png";
+import { clearUserData } from "../auth/authSlice";
+import { toast } from "react-toastify";
+interface UserData {
+  name: string;
+  email: string;
+  newProfileImage: File | null;
+  deleteProfileImage: boolean;
+}
 const Profile = () => {
   const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
   const user = useSelector((state: RootState) => state.auth.user);
-  const [loading,setloading]=useState(false);
+  const [loading, setloading] = useState(false);
 
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("orders");
   const [isFirstUpdate, setIsFirstUpdate] = useState(true);
-  const [updateData, setUpdateData] = useState({
+  const [updateData, setUpdateData] = useState<UserData>({
     name: user.name,
     email: user.email,
     newProfileImage: null,
@@ -39,7 +51,13 @@ const Profile = () => {
   };
 
   const handleUpdate = async () => {
-    setloading(true)
+    //name emtye
+    if (updateData.name === "") {
+      alert("name is required");
+      return;
+    }
+
+    setloading(true);
     const profileData = {
       name: updateData.name,
       email: updateData.email,
@@ -50,12 +68,10 @@ const Profile = () => {
     // Conditionally dispatch the update action based on isFirstUpdate
     if (isFirstUpdate) {
       await dispatch(updateProfile({ userId: user.id, user: profileData }));
-      setloading(false)
-
+      setloading(false);
     } else {
       await dispatch(updateProfile({ userId: user._id, user: profileData }));
-      setloading(false)
-
+      setloading(false);
     }
 
     setIsFirstUpdate(false);
@@ -71,27 +87,56 @@ const Profile = () => {
     }
   };
 
-const handleDeleteImage = () => {
-  // Revoke the object URL to release resources
-  if (updateData.newProfileImage) {
-    URL.revokeObjectURL(URL.createObjectURL(updateData.newProfileImage));
-  }
+  const handleDeleteImage = () => {
+    // Revoke the object URL to release resources
+    if (updateData.newProfileImage) {
+      URL.revokeObjectURL(URL.createObjectURL(updateData.newProfileImage));
+    }
 
-  setUpdateData({
-    ...updateData,
-    newProfileImage: null,
-    deleteProfileImage: true,
-  });
-};
+    setUpdateData({
+      ...updateData,
+      newProfileImage: null,
+      deleteProfileImage: true,
+    });
+  };
 
-const handleAddImage = () => {
-  setUpdateData({
-    ...updateData,
-    deleteProfileImage: false, // Clear the delete flag
-  });
-};
+  const handleAddImage = () => {
+    setUpdateData({
+      ...updateData,
+      deleteProfileImage: false, // Clear the delete flag
+    });
+  };
 
+  const handleDeleteUser = async () => {
+    if (window.confirm("Are you sure you want to delete your account?")) {
+      try {
+        // Conditionally dispatch the update action based on isFirstUpdate
+        if (isFirstUpdate) {
+          await dispatch(
+            deleteUser({
+              userId: user.id,
+            })
+          );
+          setloading(false);
+        } else {
+          await dispatch(
+            deleteUser({
+              userId: user._id,
+            })
+          );
 
+          setloading(false);
+        }
+
+        setIsFirstUpdate(false);
+
+        toast("User deleted successfully. Redirecting to login page...");
+      } catch (error) {
+        // Handle error, such as displaying an error message
+        console.error("Error deleting user:", error);
+      }
+    }
+  };
 
   const renderContent = () => {
     if (activeSection === "orders") {
@@ -115,37 +160,46 @@ const handleAddImage = () => {
 
   return (
     <section className="pt-16">
-      <div className="w-full lg:w-9/12 px-4 mx-auto">
+      <div className={"w-full lg:w-9/12 px-4 mx-auto"}>
         <div className="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-xl rounded-lg mt-16">
           <div className="px-6">
             <div className="flex flex-wrap justify-start gap-x-4 mb-4">
               {/* Update Profile Button */}
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded-md font-semibold transition duration-300 hover:bg-blue-600"
+                className={
+                  "bg-blue-500 text-white px-4 py-2 rounded-md font-semibold transition duration-300 hover:bg-blue-600"
+                }
                 onClick={handleOpenUpdateModal}
               >
                 Update Profile
               </button>
+              <button
+                className="text-sm text-red-600 hover:underline focus:outline-none"
+                onClick={handleDeleteUser}
+              >
+                Delete Account
+              </button>
             </div>
             {/* User Profile Image */}
- {/* User Profile Image */}
-<div className="flex justify-center">
-  {user.profileImage ? (
-    <img
-      src={user.profileImage}
-      alt="Profile"
-      className="shadow-xl rounded-full h-auto align-middle border-none -mt-12 w-32 h-32"
-    />
-  ) : (
-     <div className="relative mx-auto w-36 rounded-full">
-      <span className="absolute right-0 m-3 h-3 w-3 rounded-full bg-green-500 ring-2 ring-green-300 ring-offset-2"></span>
-      <img className="mx-auto h-auto w-full rounded-full"
-      src={avatar}
-      
-       alt="" />
-    </div>
-  )}
-</div>
+            {/* User Profile Image */}
+            <div className="flex justify-center">
+              {user.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt="Profile"
+                  className="shadow-xl rounded-full align-middle border-none -mt-12 w-32 h-32"
+                />
+              ) : (
+                <div className="relative mx-auto w-36 rounded-full">
+                  <span className="absolute right-0 m-3 h-3 w-3 rounded-full bg-green-500 ring-2 ring-green-300 ring-offset-2"></span>
+                  <img
+                    className="mx-auto h-auto w-full rounded-full"
+                    src={avatar}
+                    alt=""
+                  />
+                </div>
+              )}
+            </div>
 
             {/* User Information */}
             <div className="text-center">
@@ -196,143 +250,131 @@ const handleAddImage = () => {
       </div>
 
       {/* Update Profile Modal */}
-  {isUpdateModalOpen && (
-  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-    <div className="bg-white p-4 rounded-lg shadow-lg">
-      <div className="my-4 max-w-screen-md border px-4  sm:py-4 md:mx-auto">
-        <div className="flex flex-col border-b py-4  text-center">
-         
-            <p className="font-medium">Account Details</p>
-            <p className="text-sm text-gray-600">Edit your account details</p>
-         
-       
-        </div>
-        {/* Add input fields for updating user details */}
-        <div className="flex flex-col gap-4 border-b py-4 sm:flex-row">
-          <p className="shrink-0 w-32 font-medium">Name</p>
-          <label
-            htmlFor="name"
-          >
-              <input
-              type="text" id="name"
-
-              
-          
-          
-     
-         
-            value={updateData.name}
-            onChange={(e) =>
-              setUpdateData({ ...updateData, name: e.target.value })
-            }
-          />
-          </label>
-      
-        </div>
-        <div className="flex flex-col gap-4 border-b py-4 sm:flex-row">
-          <p className="shrink-0 w-32 font-medium">Email</p>
-          <input
-          disabled
-            type="email"
-            id="email"
-            value={updateData.email}
-            onChange={(e) =>
-              setUpdateData({ ...updateData, email: e.target.value })
-            }
-          />
-        </div>
-        {/* Profile Image */}
-   <div className="flex h-56 w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 p-5 text-center">
-  {updateData.newProfileImage || user.profileImage || updateData.deleteProfileImage ? (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        {updateData.deleteProfileImage ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
-            <p className="text-white text-sm">Deleted</p>
+      {isUpdateModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <div className="my-4 max-w-screen-md border px-4  sm:py-4 md:mx-auto">
+              <div className="flex flex-col border-b py-4  text-center">
+                <p className="font-medium">Account Details</p>
+                <p className="text-sm text-gray-600">
+                  Edit your account details
+                </p>
+              </div>
+              {/* Add input fields for updating user details */}
+              <div className="flex flex-col gap-4 border-b py-4 sm:flex-row">
+                <p className="shrink-0 w-32 font-medium">Name</p>
+                <label htmlFor="name">
+                  <input
+                    type="text"
+                    id="name"
+                    value={updateData.name}
+                    onChange={(e) =>
+                      setUpdateData({ ...updateData, name: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+              <div className="flex flex-col gap-4 border-b py-4 sm:flex-row">
+                <p className="shrink-0 w-32 font-medium">Email</p>
+                <input
+                  disabled
+                  type="email"
+                  id="email"
+                  value={updateData.email}
+                  onChange={(e) =>
+                    setUpdateData({ ...updateData, email: e.target.value })
+                  }
+                />
+              </div>
+              {/* Profile Image */}
+              <div className="flex h-56 w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 p-5 text-center">
+                {updateData.newProfileImage ||
+                user.profileImage ||
+                updateData.deleteProfileImage ? (
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      {updateData.deleteProfileImage ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                          <p className="text-white text-sm">Deleted</p>
+                        </div>
+                      ) : (
+                        <img
+                          src={
+                            updateData.newProfileImage
+                              ? URL.createObjectURL(updateData.newProfileImage)
+                              : user.profileImage
+                          }
+                          alt="Profile"
+                          className="h-24 w-24 rounded-full"
+                        />
+                      )}
+                    </div>
+                    {!updateData.deleteProfileImage && (
+                      <div className="mt-2">
+                        <button
+                          className="text-sm text-blue-600 hover:underline focus:outline-none"
+                          onClick={handleDeleteImage}
+                        >
+                          Delete Image
+                        </button>
+                      </div>
+                    )}
+                    <div className="mt-2">
+                      <label
+                        htmlFor="newProfileImage"
+                        className="text-sm text-blue-600 hover:underline cursor-pointer"
+                      >
+                        {updateData.newProfileImage
+                          ? "Change Image"
+                          : "Add Image"}
+                      </label>
+                      <input
+                        type="file"
+                        id="newProfileImage"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        onClick={handleAddImage} // Handle add image click
+                        disabled={updateData.newProfileImage !== null}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <label
+                      htmlFor="newProfileImage"
+                      className="text-sm text-gray-600 hover:underline cursor-pointer"
+                    >
+                      Add Profile Image
+                    </label>
+                    <input
+                      type="file"
+                      id="newProfileImage"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      onClick={handleAddImage} // Handle add image click
+                      disabled={updateData.newProfileImage !== null}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setUpdateModalOpen(false)}
+              className="mr-2 rounded-lg border-2 px-4 py-2 font-medium text-gray-500 sm:inline focus:outline-none focus:ring hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdate}
+              className="rounded-lg border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white sm:inline focus:outline-none focus:ring hover:bg-blue-700"
+            >
+              {loading ? "Updating..." : "Update"}
+            </button>
           </div>
-        ) : (
-          <img
-            src={
-              updateData.newProfileImage
-                ? URL.createObjectURL(updateData.newProfileImage)
-                : user.profileImage
-            }
-            alt="Profile"
-            className="h-24 w-24 rounded-full"
-          />
-        )}
-      </div>
-      {!updateData.deleteProfileImage && (
-        <div className="mt-2">
-          <button
-            className="text-sm text-blue-600 hover:underline focus:outline-none"
-            onClick={handleDeleteImage}
-          >
-            Delete Image
-          </button>
         </div>
       )}
-      <div className="mt-2">
-        <label
-          htmlFor="newProfileImage"
-          className="text-sm text-blue-600 hover:underline cursor-pointer"
-        >
-          {updateData.newProfileImage ? "Change Image" : "Add Image"}
-        </label>
-        <input
-          type="file"
-          id="newProfileImage"
-          accept="image/*"
-          onChange={handleFileChange}
-          onClick={handleAddImage} // Handle add image click
-    
-          disabled={updateData.newProfileImage !== null}
-          className="hidden"
-        />
-      </div>
-    </div>
-  ) : (
-    <div className="text-center">
-      <label
-        htmlFor="newProfileImage"
-        className="text-sm text-gray-600 hover:underline cursor-pointer"
-      >
-        Add Profile Image
-      </label>
-      <input
-        type="file"
-        id="newProfileImage"
-        accept="image/*"
-        onChange={handleFileChange}
-        onClick={handleAddImage} // Handle add image click
-        disabled={updateData.newProfileImage !== null}
-        className="hidden"
-      />
-    </div>
-  )}
-</div>
-
-      </div>
-         <button
-            onClick={() => setUpdateModalOpen(false)}
-            className="mr-2 rounded-lg border-2 px-4 py-2 font-medium text-gray-500 sm:inline focus:outline-none focus:ring hover:bg-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleUpdate}
-            className="rounded-lg border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white sm:inline focus:outline-none focus:ring hover:bg-blue-700"
-          >
-            {
-              loading ? 'Updating...'
-               : 'Update'
-            }
-          </button>
-    </div>
-    
-  </div>
-)}
-
     </section>
   );
 };

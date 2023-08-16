@@ -6,6 +6,7 @@ import {
   fetchUserData,
   logout,
   updateProfile,
+  deleteUser,
 } from "./authThunks";
 
 interface AuthState {
@@ -87,7 +88,6 @@ const authSlice = createSlice({
           state.isAuthenticated = true;
           state.isAdmin = action.payload.isAdmin;
           state.userId = (action.payload.user as { _id: string })._id;
-         
         }
       })
       .addCase(fetchUserData.rejected, (state, action) => {
@@ -125,25 +125,36 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
-      state.loading = false;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      
-      
-      state.isAuthenticated = true;
-      state.isAdmin = action.payload.isAdmin;
-      state.userId = (action.payload.user as { _id: string })._id;
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
 
-     
- 
-      
-    
+        state.isAuthenticated = true;
+        state.isAdmin = action.payload.isAdmin;
+        state.userId = (action.payload.user as { _id: string })._id;
       })
 
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | null;
         console.log(state.error);
+      })
+      .addCase(deleteUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteUser.fulfilled, (state) => {
+        state.loading = false;
+        localStorage.removeItem("token");
+
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.isAdmin = false;
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | null;
       });
       
   },

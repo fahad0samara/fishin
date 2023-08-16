@@ -1,7 +1,14 @@
-import {createAsyncThunk} from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import {clearUserData} from "./authSlice";
-import {REGISTER_URL, LOGIN_URL, LOGOUT_URL, FETCH_USER_URL, UPDATE_USER_URL} from "../urls";
+import { clearUserData } from "./authSlice";
+import {
+  REGISTER_URL,
+  LOGIN_URL,
+  LOGOUT_URL,
+  FETCH_USER_URL,
+  UPDATE_USER_URL,
+  DELETE_USER_URL,
+} from "../urls";
 
 export interface UserData {
   _id?: string;
@@ -10,7 +17,6 @@ export interface UserData {
   email: string;
   password: string;
   role: string;
-  
 }
 interface LoginResponse {
   user: unknown;
@@ -41,8 +47,8 @@ interface UpdateProfileArgs {
 export const register = createAsyncThunk<
   User,
   FormData, // Change the payload type to FormData
-  {rejectValue: {message: string; statusCode: number}}
->("auth/register", async (formData, {rejectWithValue}) => {
+  { rejectValue: { message: string; statusCode: number } }
+>("auth/register", async (formData, { rejectWithValue }) => {
   try {
     const response = await axios.post<User>(REGISTER_URL, formData, {
       headers: {
@@ -67,8 +73,8 @@ export const register = createAsyncThunk<
 export const login = createAsyncThunk<
   LoginResponse,
   UserData,
-  {rejectValue: string}
->("auth/login", async (credentials, {rejectWithValue}) => {
+  { rejectValue: string }
+>("auth/login", async (credentials, { rejectWithValue }) => {
   try {
     const response = await axios.post<LoginResponse>(
       LOGIN_URL,
@@ -90,9 +96,9 @@ export const login = createAsyncThunk<
 });
 
 // Logout user
-export const logout = createAsyncThunk<void, void, {rejectValue: string}>(
+export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
   "auth/logout",
-  async (_, {dispatch, rejectWithValue}) => {
+  async (_, { dispatch, rejectWithValue }) => {
     const token = localStorage.getItem("token");
     if (!token) {
       return;
@@ -120,10 +126,9 @@ export const logout = createAsyncThunk<void, void, {rejectValue: string}>(
 export const fetchUserData = createAsyncThunk<
   User,
   void,
-  {rejectValue: {message: string; error: string}}
+  { rejectValue: { message: string; error: string } }
 >("auth/fetchUserData", async (_, thunkAPI) => {
   const token = localStorage.getItem("token");
-
 
   if (!token) {
     console.log("Token not available"); // Debug: Check if this block is executed
@@ -135,15 +140,12 @@ export const fetchUserData = createAsyncThunk<
   }
 
   try {
-    const response = await axios.get<User>(
-      FETCH_USER_URL,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.get<User>(FETCH_USER_URL, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     return response.data;
   } catch (error) {
@@ -151,12 +153,11 @@ export const fetchUserData = createAsyncThunk<
       const message =
         error.response?.data?.message || "Failed to fetch user data";
       const err = error.response?.data?.error || error.message;
-      return thunkAPI.rejectWithValue({message, error: err});
+      return thunkAPI.rejectWithValue({ message, error: err });
     }
     throw error;
   }
 });
-
 
 // // export const updateProfile = createAsyncThunk(
 //   "auth/updateProfile",
@@ -194,13 +195,12 @@ export const fetchUserData = createAsyncThunk<
 
 // );
 
-
 export const updateProfile = createAsyncThunk<
   User,
   UpdateProfileArgs,
   { rejectValue: string }
 >("auth/updateProfile", async ({ userId, user }, thunkAPI) => {
-    console.log(userId); 
+
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -231,17 +231,44 @@ export const updateProfile = createAsyncThunk<
     );
     return response.data;
 
-   
     // Convert _id to id in the response before updating Redux state
-   
-
- 
   } catch (error) {
     console.log(error);
-    
+
     if (axios.isAxiosError(error)) {
       const message =
         error.response?.data?.message || "Failed to update user profile";
+      return thunkAPI.rejectWithValue(message);
+    }
+    throw error;
+  }
+});
+
+//delet the user
+export const deleteUser = createAsyncThunk<
+  void, // Return type should be void
+  { userId: number },
+  { rejectValue: string }
+>("auth/deleteUser", async ({ userId }, thunkAPI) => {
+  // Remove 'user' from the destructuring
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    console.log("Token not available");
+    thunkAPI.dispatch(logout());
+    return thunkAPI.rejectWithValue("User is not authenticated");
+  }
+
+  try {
+    await axios.delete(`${DELETE_USER_URL}/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    thunkAPI.dispatch(clearUserData());
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || "Failed to delete user";
       return thunkAPI.rejectWithValue(message);
     }
     throw error;

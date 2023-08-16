@@ -5,6 +5,10 @@ export const LOGIN_URL = `${BASE_URL}/auth/login`;
 export const LOGOUT_URL = `${BASE_URL}/auth/logout`;
 export const FETCH_USER_URL = `${BASE_URL}/auth/me`;
 export const UPDATE_USER_URL = `${BASE_URL}/auth/update`;
+//
+export const DELETE_USER_URL = `${BASE_URL}/auth/delete`;
+
+
 
 export const ADD_TO_CART_URL = `${BASE_URL}/cart/add`;
 export const FETCH_CART_URL = (userId: string) =>
@@ -27,7 +31,7 @@ export const FETCH_USERS_URL = (currentPage: number, filterBy: string) =>
 export const MAKE_ADMIN_URL = (userId: string) =>
   `${BASE_URL}/auth/make-admin/${userId}`;
 //`https://food-yumdrop0.azurewebsites.net/auth/users/${userId}`,
-export const DELETE_USER_URL = (userId: string) =>
+export const DELETE_ADMIN_USER_URL = (userId: string) =>
   `${BASE_URL}/auth/users/${userId}`;
 // `https:/food-yumdrop0.azurewebsites.net/auth/admins/${adminId}`,
 export const DELETE_ADMIN_URL = (adminId: string) =>

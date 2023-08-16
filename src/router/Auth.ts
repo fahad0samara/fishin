@@ -242,7 +242,14 @@ router.put(
         // Delete the existing profile image from Cloudinary
         if (user.profileImage) {
           // Delete the image using cloudinary.uploader.destroy()
-          await cloudinary.uploader.destroy("your-image-public-id");
+          const publicId = user.profileImage.substring(
+            user.profileImage.lastIndexOf("/") + 1,
+            user.profileImage.lastIndexOf(".")
+          );
+          await cloudinary.uploader.destroy(publicId);
+      
+          
+      
 
           // Remove the profileImage field from the user document
           user.profileImage = "";
@@ -309,6 +316,57 @@ router.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logout successful" });
   });
 });
+
+
+    
+router.delete("/delete/:userId", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (req.user.id !== userId) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this user" });
+    }
+
+    // Delete the user's profile image from Cloudinary
+    if (user.profileImage) {
+      const publicId = user.profileImage.substring(
+        user.profileImage.lastIndexOf("/") + 1,
+        user.profileImage.lastIndexOf(".")
+      );
+
+      try {
+        const result = await cloudinary.uploader.destroy(publicId);
+        console.log("Cloudinary deletion result:", result);
+      } catch (cloudinaryError) {
+        console.error("Error deleting image from Cloudinary:", cloudinaryError);
+      }
+    }
+
+    await Cart.deleteMany({ user: userId });
+    await Order.deleteMany({ user: userId });
+
+    await User.findOneAndDelete({ _id: userId }).exec();
+
+    res
+      .status(200)
+      .json({ message: "User and associated data deleted successfully" });
+  } catch (error:any) {
+    console.error("Error deleting user:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
+  }
+});
+
+
+    
 
 
 
