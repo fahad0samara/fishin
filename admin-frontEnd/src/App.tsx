@@ -11,7 +11,7 @@ import {useDarkMode} from "./hook/useDarkMode";
 import {RootState} from "./Redux/store";
 import {AnyAction, ThunkDispatch} from "@reduxjs/toolkit";
 import {fetchUserData, logout} from "./auth/authThunks";
-import AppRouter from "./router/AppRouter";
+import Router from "./router/Router";
 
 
 const App = () => {
@@ -47,7 +47,7 @@ useEffect(() => {
     >
       <DarkModeToggle />
       <ToastContainer />
-      <AppRouter />
+      <Router />
     </div>
   );
 };

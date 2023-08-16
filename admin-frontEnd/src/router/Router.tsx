@@ -7,42 +7,47 @@ import Profile from '../Home/Profile';
 import RegisterForm from '../authr/RegisterForm';
 import Hero from '../Home/Hero';
 import { RootState } from '../Redux/store';
-import AdminRegistration from '../admin/AdminRegistration';
-import ProfileAdmin from '../admin/ProfileAdmin';
 
-const AppRouter = (): JSX.Element => {
-  const {isAuthenticated,  isAdmin} = useSelector(
+import ProfileAdmin from '../admin/ProfileAdmin';
+import Layout from './NavSide/Layout';
+import Category from '../page/Category';
+import Product from '../page/product/Product';
+
+const Router = (): JSX.Element => {
+   const {isAuthenticated,  isAdmin} = useSelector(
     (state: RootState) => state.auth
   );
 
-
   
   return (
-    <div className="">
+    <Layout>
       <Routes>
         <Route path="/" element={<Hero />} />
         <Route path="/Register" element={<RegisterForm />} />
         <Route path="/Login" element={<Login />} />
-              
 
         {/* Protected Routes for Authenticated Users */}
         {isAuthenticated && (
           <>
+
             <Route path="/Profile" element={<Profile />} />
+             
             {/* ... other authenticated user routes */}
           </>
         )}
 
-        {/* Protected Routes for Admin Users */}
-        {isAdmin && (
+         {/* Protected Routes for Authenticated admin */}
+        {isAuthenticated && isAdmin && (
           <>
-        
-             <Route path="/ProfileAdmin" element={<ProfileAdmin />} />
-            {/* ... other admin routes */}
+            <Route path="/ProfileAdmin" element={<ProfileAdmin />} />
+              <Route path="/Product" element={<Product />} />
+                <Route path="/Category" element={<Category />} />
+            
           </>
         )}
-      
-    <Route path="/Admin" element={<AdminRegistration />} />
+
+
+
 
         {/* Default and Not Found Routes */}
         <Route path="/404" element={<NotFound />} />
@@ -59,8 +64,8 @@ const AppRouter = (): JSX.Element => {
           }
         />
       </Routes>
-    </div>
+    </Layout>
   );
 };
 
-export default AppRouter;
+export default Router;
