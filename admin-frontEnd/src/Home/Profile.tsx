@@ -63,6 +63,7 @@ const Profile = () => {
       email: updateData.email,
       newProfileImage: updateData.newProfileImage,
       deleteProfileImage: updateData.deleteProfileImage,
+      
     };
 
     // Conditionally dispatch the update action based on isFirstUpdate

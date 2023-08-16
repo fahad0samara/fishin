@@ -7,6 +7,7 @@ import Profile from '../Home/Profile';
 import RegisterForm from '../authr/RegisterForm';
 import Hero from '../Home/Hero';
 import { RootState } from '../Redux/store';
+import AdminRegistration from '../admin/AdminRegistration';
 
 const AppRouter = (): JSX.Element => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -17,6 +18,7 @@ const AppRouter = (): JSX.Element => {
         <Route path="/" element={<Hero />} />
         <Route path="/Register" element={<RegisterForm />} />
         <Route path="/Login" element={<Login />} />
+              <Route path="/admin" element={<AdminRegistration />} />
 
         {/* Protected Routes for Authenticated Users */}
         {isAuthenticated && (

@@ -90,8 +90,9 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
         `data:image/jpeg;base64,${defaultImageBuffer.toString("base64")}`,
         {
           folder: "user-profile-images",
-          public_id: `profile-default-${Date.now()}`,
+          public_id: `profile-${Date.now()}`,
           overwrite: true,
+          
         }
       );
 
@@ -158,7 +159,7 @@ router.post("/login", async (req, res) => {
         profileImage: user.profileImage,
       },
     });
-    console.log(user);
+  
   } catch (error: any) {
     console.log(error.message);
     res
@@ -203,56 +204,51 @@ router.get("/me", authenticateToken, async (req, res) => {
       .json({ message: "Error fetching user data", error: error.message });
   }
 });
-
 router.put(
   "/update/:userId",
   upload.single("profileImage"),
   async (req, res) => {
     try {
-      
       const userId = req.params.userId;
-      
       const { name, email, deleteProfileImage } = req.body;
-
-   console.log(
-        "Received profile update request:",
-
-   );
-   
 
       // Fetch the user from the database
       const user = await User.findById(userId);
-      console.log(
-        "Received profile update request:",
-        user
-      );
-      
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       // Update user fields
-
       if (name) user.name = name;
       if (email) user.email = email;
 
       // Handle profile image updates or deletions
-      if (deleteProfileImage === "true") {
+    if (deleteProfileImage === "true") {
+  // Delete the existing profile image from Cloudinary
+  if (user.profileImage) {
+    // Delete the image using cloudinary.uploader.destroy()
+    const publicId = user.profileImage.split("/")[4]; // Modify this index as needed
+    const deleteResult = await cloudinary.uploader.destroy(publicId);
+    console.log(`Deleted ${JSON.stringify(deleteResult)}`);
+
+
+    if (deleteResult.result === "ok") {
+      user.profileImage = ""; // Remove the profileImage field from the user document
+    } else {
+      console.error("Error deleting image from Cloudinary:", deleteResult);
+    }
+  }
+
         // Delete the existing profile image from Cloudinary
         if (user.profileImage) {
           // Delete the image using cloudinary.uploader.destroy()
-          const publicId = user.profileImage.substring(
-            user.profileImage.lastIndexOf("/") + 1,
-            user.profileImage.lastIndexOf(".")
-          );
-          await cloudinary.uploader.destroy(publicId);
-      
-          
-      
+          const publicId = user.profileImage.split("/")[4]; // Modify this index as needed
+          const deleteResult = await cloudinary.uploader.destroy(publicId);
 
-          // Remove the profileImage field from the user document
-          user.profileImage = "";
+          if (deleteResult.result === "ok") {
+            user.profileImage = ""; // Remove the profileImage field from the user document
+          }
         }
       } else if (req.file) {
         // Update the profile image if a new image is provided
@@ -262,12 +258,15 @@ router.put(
           .jpeg({ quality: 80 })
           .toBuffer();
 
+        // Generate a unique identifier for the new image
+        const uniqueId = `${userId}-${Date.now()}`;
+
         // Upload the compressedImage to Cloudinary and get the secure URL
         const result = await cloudinary.uploader.upload(
           `data:image/jpeg;base64,${compressedImage.toString("base64")}`,
           {
             folder: "user-profile-images",
-            public_id: `profile-${Date.now()}`,
+            public_id: `profile-${uniqueId}`, // Use a unique identifier
             overwrite: true,
           }
         );
@@ -278,17 +277,15 @@ router.put(
       await user.save();
 
       res.status(200).json({ message: "Profile updated successfully", user });
-      console.log(user.id);
-      
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error);
-      
       res
         .status(500)
         .json({ message: "Error updating profile", error: error.message });
     }
   }
 );
+
 
 //logout
 router.post("/logout", (req, res) => {
@@ -336,20 +333,15 @@ router.delete("/delete/:userId", authenticateToken, async (req, res) => {
 
     // Delete the user's profile image from Cloudinary
     if (user.profileImage) {
-      const publicId = user.profileImage.substring(
-        user.profileImage.lastIndexOf("/") + 1,
-        user.profileImage.lastIndexOf(".")
-      );
-
-      try {
-        const result = await cloudinary.uploader.destroy(publicId);
-        console.log("Cloudinary deletion result:", result);
-      } catch (cloudinaryError) {
-        console.error("Error deleting image from Cloudinary:", cloudinaryError);
-      }
+      // Delete the image using cloudinary.uploader.destroy()
+      const publicId = user.profileImage.split("/")[4]; // Modify this index as needed
+      const deleteResult = await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted ${JSON.stringify(deleteResult)}`);
     }
-
     await Cart.deleteMany({ user: userId });
+    await CartItem.deleteMany({ user: userId });
+    await Review.deleteMany({ user: userId });
+ 
     await Order.deleteMany({ user: userId });
 
     await User.findOneAndDelete({ _id: userId }).exec();
@@ -367,7 +359,65 @@ router.delete("/delete/:userId", authenticateToken, async (req, res) => {
 
 
     
+//register admin
+// Register a new admin user
+router.post("/register-admin", upload.single("profileImage"), async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
+    // Check if an admin with the provided email already exists
+    const existingAdmin = await User.findOne({ email, role: "admin" });
+    if (existingAdmin) {
+      return res
+        .status(409)
+        .json({ message: "Admin with this email already exists" });
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    let imageUrl = null; // Default to null if no image is uploaded
+
+    // Handle image upload using Cloudinary
+    if (req.file) {
+      const file = req.file;
+      const compressedImage = await sharp(file.buffer)
+        .resize(500, 500)
+        .jpeg({ quality: 80 })
+        .toBuffer();
+
+      // Upload the compressedImage to Cloudinary and get the secure URL
+      const result = await cloudinary.uploader.upload(
+        `data:image/jpeg;base64,${compressedImage.toString("base64")}`,
+        {
+          folder: "user-profile-images",
+          public_id: `profile-${Date.now()}`,
+          overwrite: true,
+        }
+      );
+
+      imageUrl = result.secure_url;
+    }
+
+    const newAdmin = new User({
+      name,
+      email,
+      password: hashedPassword,
+      profileImage: imageUrl,
+      role: "admin", // Set role to admin
+    });
+
+    await newAdmin.save();
+    console.log("Admin user saved successfully:", newAdmin);
+    res.status(201).json({ message: "Admin user registered successfully" });
+  } catch (error:any) {
+    console.log("Error registering admin:", error);
+    res
+      .status(500)
+      .json({ message: "Error registering admin", error: error.message });
+  }
+});
 
 
 
