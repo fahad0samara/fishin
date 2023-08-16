@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice } from "@reduxjs/toolkit";
 import {
@@ -50,11 +51,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+          console.log("Login payload:", action.payload); 
         state.loading = false;
-        state.user = action.payload.user; // Update the user data
+        state.user = action.payload.user;
+   
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.isAdmin;
+        //@ts-ignore
+         state.isAdmin = action.payload.user.role === "admin";
         state.userId = (action.payload.user as { _id: string })._id;
         localStorage.setItem("token", action.payload.token);
       })

@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AnyAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { RootState } from '../Redux/store';
 import { login } from '../auth/authThunks';
 import { useNavigate } from 'react-router-dom';
+import { clearError } from '../auth/authSlice';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-    const error = useSelector((state: RootState) => state.auth.error);
+  const {isAuthenticated, error, loading, isAdmin} = useSelector(
+    (state: RootState) => state.auth
+  );
+
   const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
 
   const navigate = useNavigate();
@@ -20,7 +24,11 @@ function LoginForm() {
       await dispatch(login({ email, password }));
       console.log('User logged in successfully.');
    
-      navigate('/Profile');
+   
+          //remove the error after 5s
+    setTimeout(() => {
+      dispatch(clearError());
+    }, 5000);
       
     } catch (error) {
       console.error(error);
@@ -28,7 +36,17 @@ function LoginForm() {
     }
   };
 
-console.log(error);
+  useEffect(() => {
+    console.log("isAuthenticated:", isAuthenticated);
+  console.log("isAdmin:", isAdmin);
+    if (isAuthenticated) {
+      if (isAdmin) {
+        navigate("/ProfileAdmin"); // Redirect admin to the admin dashboard
+      } else {
+        navigate("/Profile"); // Redirect regular user to the menu
+      }
+    }
+  }, [isAuthenticated, isAdmin, navigate]);
 
 
 

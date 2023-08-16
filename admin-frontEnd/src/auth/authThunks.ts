@@ -22,6 +22,9 @@ interface LoginResponse {
   user: unknown;
   isAdmin: boolean;
   token: string;
+  role: string;
+  
+  
 }
 
 interface User {
@@ -31,7 +34,11 @@ interface User {
   id: number;
   email: string;
   name: string;
+  role: string;
+  
 }
+
+
 
 interface UpdateProfileArgs {
   userId: number;
@@ -81,6 +88,8 @@ export const login = createAsyncThunk<
 
       credentials
     );
+    console.log(response.data);
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

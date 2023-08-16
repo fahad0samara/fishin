@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import  { useState } from "react";
 import axios from "axios";
 
 function AdminRegistration() {
@@ -9,7 +10,7 @@ function AdminRegistration() {
     profileImage: null,
   });
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event: { target: { name: string; value: any; files: any; }; }) => {
     const { name, value, files } = event.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -17,7 +18,7 @@ function AdminRegistration() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: { preventDefault: () => void; }) => {
     event.preventDefault();
 
     const { name, email, password, profileImage } = formData;
@@ -29,7 +30,7 @@ function AdminRegistration() {
     data.append("profileImage", profileImage);
 
     try {
-      await axios.post("/auth/register-admin", data);
+      await axios.post("http://localhost:3000/auth/register-admin", data);
       alert("Admin registered successfully!");
     } catch (error) {
       console.error("Error registering admin:", error);
@@ -77,30 +78,34 @@ function AdminRegistration() {
             required
           />
         </div>
-    <div className="flex items-center">
-            {formData.profileImage ? (
-              <div className="mr-4">
-                <img
-                  className="w-16 h-16 object-cover rounded-full"
-                  src={URL.createObjectURL(formData.profileImage)}
-                  alt="Profile"
-                />
-                <button
-                  className="text-red-600 mt-2 hover:underline"
-                  onClick={() => setFormData({ ...formData, profileImage: null })}
-                >
-                  Remove
-                </button>
-              </div>
-            ) : null}
-            <input
-              className="border border-gray-300 px-3 py-2 rounded-md"
-              type="file"
-              name="profileImage"
-              onChange={handleInputChange}
-              accept="image/*"
-            />
-          </div>
+    <div className="flex items-center mb-4">
+  {formData.profileImage ? (
+    <div className="flex items-center mr-4">
+      <img
+        className="w-16 h-16 object-cover rounded-full mr-2"
+        src={URL.createObjectURL(formData.profileImage)}
+        alt="Profile"
+      />
+      <button
+        className="text-red-600 hover:text-red-800 focus:outline-none"
+        onClick={() => setFormData({ ...formData, profileImage: null })}
+      >
+        Remove
+      </button>
+    </div>
+  ) : null}
+  <label className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md cursor-pointer">
+    Upload Image
+    <input
+      className="hidden"
+      type="file"
+      name="profileImage"
+      onChange={handleInputChange}
+      accept="image/*"
+    />
+  </label>
+</div>
+
         <div>
           <button
             className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
