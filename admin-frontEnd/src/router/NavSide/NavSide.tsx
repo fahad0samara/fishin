@@ -81,6 +81,21 @@ const NavSide: React.FC<NavSideProps> = ({children, ...rest}) => {
             <span className="">Product</span>
           </div>
         </Link>
+            <Link
+          key="UserList"
+          to="/UserList"
+          className={`${linkClasses} ${
+            selectedLink === "/UserList"
+              ? "bg-slate-600 text-white  animate-pulse"
+              : ""
+          }`}
+          onClick={() => handleLinkClick("/UserList")}
+        >
+          <div>
+            {selectedLink === "/UserList" && <SVGComponent />}
+            <span className="">UserList</span>
+          </div>
+        </Link>
         <Link
           key="Category"
           to="/Category"

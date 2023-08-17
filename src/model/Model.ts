@@ -13,7 +13,15 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "admin"],
     default: "user",
   },
-});
+
+
+
+
+ 
+
+}
+
+);
 
 // Define Category Schema
 const categorySchema = new mongoose.Schema({
@@ -22,8 +30,6 @@ const categorySchema = new mongoose.Schema({
   imageUrl: {type: String},
 });
 
-// Size Schema
-// const SIZE_VALUES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL", "6XL", "7XL"];
 
 const sizeSchema = new mongoose.Schema({
   name: {
@@ -33,39 +39,6 @@ const sizeSchema = new mongoose.Schema({
   },
 });
 
-// Color Schema
-// const COLOR_VALUES = [
-//   "Red",
-//   "Green",
-//   "Blue",
-//   "Yellow",
-//   "Purple",
-//   "Orange",
-//   "Pink",
-//   "Black",
-//   "White",
-//   "Gray",
-//   "Brown",
-//   "Cyan",
-//   "Magenta",
-//   "Lavender",
-//   "Lime",
-//   "Teal",
-//   "Olive",
-//   "Maroon",
-//   "Indigo",
-//   "Turquoise",
-//   "Silver",
-//   "Gold",
-//   "Navy",
-//   "Violet",
-//   "Beige",
-//   "Mint",
-//   "Coral",
-//   "Salmon",
-//   "Periwinkle",
-//   "Plum",
-// ];
 
 const colorSchema = new mongoose.Schema({
   code: {

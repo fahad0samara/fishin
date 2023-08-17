@@ -204,6 +204,8 @@ router.get("/me", authenticateToken, async (req, res) => {
       .json({ message: "Error fetching user data", error: error.message });
   }
 });
+
+//update the user
 router.put(
   "/update/:userId",
   upload.single("profileImage"),
@@ -307,8 +309,7 @@ router.post("/logout", (req, res) => {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    // Perform any additional actions for token invalidation or revocation here
-    // For example, add the token to a 'revokedTokens' set
+
 
     res.status(200).json({ message: "Logout successful" });
   });
@@ -358,8 +359,6 @@ router.delete("/delete/:userId", authenticateToken, async (req, res) => {
 });
 
 
-    
-//register admin
 // Register a new admin user
 router.post("/register-admin", upload.single("profileImage"), async (req, res) => {
   try {
@@ -418,6 +417,74 @@ router.post("/register-admin", upload.single("profileImage"), async (req, res) =
       .json({ message: "Error registering admin", error: error.message });
   }
 });
+
+
+// Get all users
+router.get("/all", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+     const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+const sortField = (req.query.sortField as string) || "name"; // Default sorting field
+const sortOrder = (req.query.sortOrder as "asc" | "desc") || "asc"; // Default sorting order
+
+const sortOptions: any = { [sortField]: sortOrder === "desc" ? -1 : 1 };
+    const users = await User.find({})
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .sort(sortOptions)
+      .exec();
+
+    res.status(200).json(users);
+  } catch (error: any) {
+    console.log("Error fetching users:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching users", error: error.message });
+  }
+});
+
+router.delete("/delete-user/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete user's image from Cloudinary
+    if (user.profileImage) {
+      // Delete the image using cloudinary.uploader.destroy()
+      const publicId = user.profileImage.split("/")[4]; // Modify this index as needed
+      const deleteResult = await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted ${JSON.stringify(deleteResult)}`);
+    }
+   
+    
+ 
+    // Delete the user from the database
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "User deleted successfully." });
+  } catch (error: any) {
+    console.log("Error deleting user:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
+  }
+});
+
+
+
+
+
+
 
 
 

@@ -12,6 +12,8 @@ import ProfileAdmin from '../admin/ProfileAdmin';
 import Layout from './NavSide/Layout';
 import Category from '../page/Category';
 import Product from '../page/product/Product';
+import UserList from '../admin/UserList';
+import AdminRegistration from '../admin/AdminRegistration';
 
 const Router = (): JSX.Element => {
    const {isAuthenticated,  isAdmin} = useSelector(
@@ -22,6 +24,7 @@ const Router = (): JSX.Element => {
   return (
     <Layout>
       <Routes>
+        <Route path="/admin" element={<AdminRegistration />} />
         <Route path="/" element={<Hero />} />
         <Route path="/Register" element={<RegisterForm />} />
         <Route path="/Login" element={<Login />} />
@@ -39,6 +42,7 @@ const Router = (): JSX.Element => {
          {/* Protected Routes for Authenticated admin */}
         {isAuthenticated && isAdmin && (
           <>
+            <Route path="/UserList" element={<UserList />} />
             <Route path="/ProfileAdmin" element={<ProfileAdmin />} />
               <Route path="/Product" element={<Product />} />
                 <Route path="/Category" element={<Category />} />
